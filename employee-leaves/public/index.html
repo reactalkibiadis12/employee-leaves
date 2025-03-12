@@ -90,6 +90,26 @@
             transform: translateY(-2px);
         }
 
+        .employee-search {
+            margin-bottom: 15px;
+        }
+
+        .employee-search input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fff;
+            transition: border-color 0.3s;
+        }
+
+        .employee-search input:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+
         .employee-dropdown {
             position: relative;
             margin-bottom: 20px;
@@ -292,6 +312,10 @@
             <button onclick="addEmployee()">Προσθήκη</button>
         </div>
 
+        <div class="employee-search">
+            <input type="text" id="employeeSearch" placeholder="Αναζήτηση Εργαζομένου (Επώνυμο ή Όνομα)" onkeyup="filterEmployees()">
+        </div>
+
         <div class="employee-dropdown" id="employeeDropdown">
             <select id="employeeSelect" onchange="showDetails(this.value)">
                 <option value="">Επιλέξτε Εργαζόμενο</option>
@@ -358,8 +382,9 @@
         let selectedEmployee = null;
         let leaves = [];
         let editingEmployee = null;
+        let allEmployees = []; // Μεταβλητή για αποθήκευση όλων των εργαζομένων
         const currentYear = new Date().getFullYear();
-        const adminEmail = "themspyr@gmail.com"; // Αντικατέστησε με το email του διαχειριστή
+        const adminEmail = "admin@example.com"; // Αντικατέστησε με το email του διαχειριστή
 
         // Έλεγχος συνδεσιμότητας κατά το φόρτωμα της σελίδας
         async function checkAuth() {
@@ -445,14 +470,28 @@
                 console.error("Error loading employees:", error);
                 return;
             }
+            allEmployees = data; // Αποθήκευση όλων των εργαζομένων
+            renderEmployees(data);
+        }
+
+        function renderEmployees(employees) {
             const dropdown = document.querySelector("#employeeSelect");
             dropdown.innerHTML = '<option value="">Επιλέξτε Εργαζόμενο</option>';
-            data.forEach((emp) => {
+            employees.forEach((emp) => {
                 const option = document.createElement("option");
                 option.value = emp.id;
                 option.textContent = `${emp.surname} ${emp.name} | ${emp.afm} | ${emp.email}`;
                 dropdown.appendChild(option);
             });
+        }
+
+        function filterEmployees() {
+            const searchTerm = document.getElementById("employeeSearch").value.toLowerCase();
+            const filteredEmployees = allEmployees.filter(emp => 
+                emp.surname.toLowerCase().includes(searchTerm) || 
+                emp.name.toLowerCase().includes(searchTerm)
+            );
+            renderEmployees(filteredEmployees);
         }
 
         async function addEmployee() {
