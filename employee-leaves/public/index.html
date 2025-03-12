@@ -17,10 +17,13 @@
         .form-container, .edit-form { margin-bottom: 20px; }
         .edit-form { display: none; border: 1px solid #ccc; padding: 10px; background-color: #f9f9f9; }
         .leave-actions { display: flex; gap: 5px; }
+        .print-header { display: none; }
         @media print {
             body * { visibility: hidden; }
-            #leaveTable, #leaveTable * { visibility: visible; }
-            #leaveTable { position: absolute; left: 0; top: 0; width: 100%; }
+            .print-header, .print-header *, #leaveTable, #leaveTable * { visibility: visible; }
+            .print-header { position: absolute; top: 0; left: 0; width: 100%; }
+            #leaveTable { position: absolute; top: 100px; left: 0; width: 100%; }
+            .leave-actions { display: none; }
         }
     </style>
 </head>
@@ -49,27 +52,31 @@
     <div class="details" id="employeeDetails">
         <h2 id="employeeName"></h2>
         <div class="summary">
-            <label>Δικαιούται 2025: <input type="number" id="entitled" value="25" readonly></label><br>
+            <label>Δικαιούται 2025: <span id="entitled">25</span></label><br>
             <label>Υπόλοιπα προηγούμενου έτους: <input type="number" id="previous" min="0" onchange="updateTotals()"></label><br>
             <label>Σύνολα 2025: <span id="total"></span></label><br>
             <label>Υπόλοιπα: <span id="remaining"></span></label>
         </div>
+        <div class="print-header">
+            <h3 id="printEmployeeDetails"></h3>
+            <p>Υπάλληλος: ____________________  Τμηματάρχης: ____________________  Προϊστάμενος: ____________________</p>
+        </div>
         <table id="leaveTable">
             <thead>
                 <tr>
-                    <th>Α/Α</th><th>ΑΠΟ</th><th>ΕΩΣ</th><th>ΜΕΡΕΣ</th><th>ΚΑΝΟΝΙΚΗ</th><th>ΑΝΑΡ/ΚΗ</th><th>ΓΟΝΙΚΗ</th><th>ΕΚΠ/ΚΗ</th><th>Υ.Δ</th><th>ΑΙΜΟΔΟΣΙΑ</th><th>ΡΕΠΟ</th><th>ΑΛΛΗ</th><th>ΕΝΕΡΓΕΙΕΣ</th>
+                    <th>ΕΠΙΛΟΓΗ</th><th>Α/Α</th><th>ΑΠΟ</th><th>ΕΩΣ</th><th>ΜΕΡΕΣ</th><th>ΚΑΝΟΝΙΚΗ</th><th>ΑΝΑΡ/ΚΗ</th><th>ΓΟΝΙΚΗ</th><th>ΕΚΠ/ΚΗ</th><th>Υ.Δ</th><th>ΑΙΜΟΔΟΣΙΑ</th><th>ΡΕΠΟ</th><th>ΑΛΛΗ</th><th>ΕΝΕΡΓΕΙΕΣ</th>
                 </tr>
             </thead>
             <tbody id="leaveTableBody"></tbody>
         </table>
         <button onclick="addLeaveRow()">Προσθήκη Άδειας</button>
+        <button onclick="deleteSelectedLeaves()">Διαγραφή Επιλεγμένων</button>
         <button onclick="printLeaves()">Εκτύπωση Αδειών</button>
     </div>
 
     <!-- Φόρτωση του Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script>
-        // Δημιουργία του Supabase client με τα δικά σου στοιχεία
         const supabaseUrl = "https://nsrksmlqruogmckxpqer.supabase.co";
         const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zcmtzbWxxcnVvZ21ja3hwcWVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NjYwNjQsImV4cCI6MjA1NzM0MjA2NH0.NydawPjtyBG83qH79uY6rWqCFZleJ6zfo-ZgkRw5QoY";
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -78,7 +85,12 @@
         let leaves = [];
         let editingEmployee = null;
 
-        // Φόρτωση εργαζομένων
+        function formatDate(dateStr) {
+            if (!dateStr) return "";
+            const date = new Date(dateStr);
+            return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
+        }
+
         async function loadEmployees() {
             const { data, error } = await supabase.from("employees").select("*");
             if (error) {
@@ -100,7 +112,6 @@
         }
         loadEmployees();
 
-        // Προσθήκη νέου εργαζομένου
         async function addEmployee() {
             const surname = document.getElementById("surname").value;
             const name = document.getElementById("name").value;
@@ -124,7 +135,6 @@
             }
         }
 
-        // Διαγραφή εργαζομένου
         async function deleteEmployee(id) {
             if (confirm("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτόν τον εργαζόμενο;")) {
                 const { error: leavesError } = await supabase
@@ -155,7 +165,6 @@
             }
         }
 
-        // Επεξεργασία εργαζομένου
         async function editEmployee(id) {
             const { data, error } = await supabase
                 .from("employees")
@@ -174,7 +183,6 @@
             document.getElementById("editForm").style.display = "block";
         }
 
-        // Αποθήκευση αλλαγών στην επεξεργασία
         async function saveEdit() {
             const surname = document.getElementById("editSurname").value;
             const name = document.getElementById("editName").value;
@@ -201,13 +209,11 @@
             }
         }
 
-        // Ακύρωση επεξεργασίας
         function cancelEdit() {
             document.getElementById("editForm").style.display = "none";
             editingEmployee = null;
         }
 
-        // Εμφάνιση λεπτομερειών
         async function showDetails(id) {
             const { data, error } = await supabase
                 .from("employees")
@@ -221,6 +227,7 @@
             selectedEmployee = data;
             document.getElementById("employeeDetails").style.display = "block";
             document.getElementById("employeeName").textContent = `${data.surname} ${data.name}`;
+            document.getElementById("printEmployeeDetails").textContent = `Εργαζόμενος: ${data.surname} ${data.name} | ΑΦΜ: ${data.afm} | Email: ${data.email}`;
             document.getElementById("previous").value = data.previous || 0;
             const { data: leavesData, error: leavesError } = await supabase
                 .from("leaves")
@@ -235,27 +242,27 @@
             renderLeaveTable();
         }
 
-        // Προσθήκη νέας άδειας
         function addLeaveRow() {
             const tbody = document.getElementById("leaveTableBody");
-            const rowIndex = leaves.length + 1;
+            const rowIndex = leaves.length;
             const row = document.createElement("tr");
             row.innerHTML = `
-                <td>${rowIndex}</td>
-                <td><input type="date" onchange="calculateDays(this, ${rowIndex - 1})"></td>
-                <td><input type="date" onchange="calculateDays(this, ${rowIndex - 1})"></td>
+                <td><input type="checkbox" class="select-leave"></td>
+                <td>${rowIndex + 1}</td>
+                <td><input type="date" onchange="calculateDays(this, ${rowIndex})"></td>
+                <td><input type="date" onchange="calculateDays(this, ${rowIndex})"></td>
                 <td><span class="days">0</span></td>
-                <td><input type="checkbox" onchange="updateLeave(${rowIndex - 1})"></td>
-                <td><input type="checkbox" onchange="updateLeave(${rowIndex - 1})"></td>
-                <td><input type="checkbox" onchange="updateLeave(${rowIndex - 1})"></td>
-                <td><input type="checkbox" onchange="updateLeave(${rowIndex - 1})"></td>
-                <td><input type="checkbox" onchange="updateLeave(${rowIndex - 1})"></td>
-                <td><input type="checkbox" onchange="updateLeave(${rowIndex - 1})"></td>
-                <td><input type="checkbox" onchange="updateLeave(${rowIndex - 1})"></td>
-                <td><input type="checkbox" onchange="updateLeave(${rowIndex - 1})"></td>
+                <td><input type="radio" name="leave${rowIndex}" value="regular" onchange="updateLeave(${rowIndex})"></td>
+                <td><input type="radio" name="leave${rowIndex}" value="sick" onchange="updateLeave(${rowIndex})"></td>
+                <td><input type="radio" name="leave${rowIndex}" value="parental" onchange="updateLeave(${rowIndex})"></td>
+                <td><input type="radio" name="leave${rowIndex}" value="educational" onchange="updateLeave(${rowIndex})"></td>
+                <td><input type="radio" name="leave${rowIndex}" value="special" onchange="updateLeave(${rowIndex})"></td>
+                <td><input type="radio" name="leave${rowIndex}" value="blood_donation" onchange="updateLeave(${rowIndex})"></td>
+                <td><input type="radio" name="leave${rowIndex}" value="day_off" onchange="updateLeave(${rowIndex})"></td>
+                <td><input type="radio" name="leave${rowIndex}" value="other" onchange="updateLeave(${rowIndex})"></td>
                 <td class="leave-actions">
-                    <button onclick="saveLeave(${rowIndex - 1})">Save</button>
-                    <button onclick="deleteLeave(${rowIndex - 1})" disabled>Delete</button>
+                    <button onclick="saveLeave(${rowIndex})">Save</button>
+                    <button onclick="deleteLeave(${rowIndex})" disabled>Delete</button>
                 </td>
             `;
             tbody.appendChild(row);
@@ -264,94 +271,76 @@
                 from_date: "",
                 to_date: "",
                 days: 0,
-                regular: false,
-                sick: false,
-                parental: false,
-                educational: false,
-                special: false,
-                blood_donation: false,
-                day_off: false,
-                other: false,
-                saved: false // Flag για να δείχνει αν έχει αποθηκευτεί
+                type: "",
+                saved: false
             });
         }
 
-        // Υπολογισμός ημερών
         function calculateDays(input, index) {
             const row = input.parentElement.parentElement;
-            const from = row.cells[1].querySelector("input").value;
-            const to = row.cells[2].querySelector("input").value;
+            const fromInput = row.cells[2].querySelector("input");
+            const toInput = row.cells[3].querySelector("input");
+            const from = fromInput.value;
+            const to = toInput.value;
             if (from && to) {
                 const start = new Date(from);
                 const end = new Date(to);
+                if (end < start) {
+                    alert("Η ημερομηνία ΕΩΣ πρέπει να είναι ίδια ή μεταγενέστερη από την ΑΠΟ!");
+                    toInput.value = from;
+                    return;
+                }
                 const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-                row.cells[3].querySelector(".days").textContent = days;
+                row.cells[4].querySelector(".days").textContent = days;
                 leaves[index].from_date = from;
                 leaves[index].to_date = to;
                 leaves[index].days = days;
             }
         }
 
-        // Ενημέρωση πεδίων άδειας
         function updateLeave(index) {
             const row = document.getElementById("leaveTableBody").rows[index];
-            leaves[index].regular = row.cells[4].querySelector("input").checked;
-            leaves[index].sick = row.cells[5].querySelector("input").checked;
-            leaves[index].parental = row.cells[6].querySelector("input").checked;
-            leaves[index].educational = row.cells[7].querySelector("input").checked;
-            leaves[index].special = row.cells[8].querySelector("input").checked;
-            leaves[index].blood_donation = row.cells[9].querySelector("input").checked;
-            leaves[index].day_off = row.cells[10].querySelector("input").checked;
-            leaves[index].other = row.cells[11].querySelector("input").checked;
+            const selectedType = row.querySelector(`input[name="leave${index}"]:checked`);
+            leaves[index].type = selectedType ? selectedType.value : "";
         }
 
-        // Αποθήκευση άδειας στη βάση
         async function saveLeave(index) {
             const leave = leaves[index];
             if (!leave.from_date || !leave.to_date) {
                 alert("Παρακαλώ συμπληρώστε τις ημερομηνίες ΑΠΟ και ΕΩΣ!");
                 return;
             }
+            if (!leave.type) {
+                alert("Παρακαλώ επιλέξτε έναν τύπο άδειας!");
+                return;
+            }
+            const leaveData = {
+                employee_id: selectedEmployee.id,
+                from_date: leave.from_date,
+                to_date: leave.to_date,
+                days: leave.days,
+                regular: leave.type === "regular",
+                sick: leave.type === "sick",
+                parental: leave.type === "parental",
+                educational: leave.type === "educational",
+                special: leave.type === "special",
+                blood_donation: leave.type === "blood_donation",
+                day_off: leave.type === "day_off",
+                other: leave.type === "other"
+            };
             if (leave.saved) {
-                // Ενημέρωση υπάρχουσας άδειας
                 const { error } = await supabase
                     .from("leaves")
-                    .update({
-                        from_date: leave.from_date,
-                        to_date: leave.to_date,
-                        days: leave.days,
-                        regular: leave.regular,
-                        sick: leave.sick,
-                        parental: leave.parental,
-                        educational: leave.educational,
-                        special: leave.special,
-                        blood_donation: leave.blood_donation,
-                        day_off: leave.day_off,
-                        other: leave.other
-                    })
+                    .update(leaveData)
                     .eq("id", leave.id);
                 if (error) {
                     console.error("Error updating leave:", error);
                     return;
                 }
             } else {
-                // Προσθήκη νέας άδειας
                 const { data, error } = await supabase
                     .from("leaves")
-                    .insert({
-                        employee_id: selectedEmployee.id,
-                        from_date: leave.from_date,
-                        to_date: leave.to_date,
-                        days: leave.days,
-                        regular: leave.regular,
-                        sick: leave.sick,
-                        parental: leave.parental,
-                        educational: leave.educational,
-                        special: leave.special,
-                        blood_donation: leave.blood_donation,
-                        day_off: leave.day_off,
-                        other: leave.other
-                    })
+                    .insert(leaveData)
                     .select();
                 if (error) {
                     console.error("Error saving leave:", error);
@@ -359,13 +348,13 @@
                 }
                 leaves[index] = data[0];
                 leaves[index].saved = true;
+                leaves[index].type = Object.keys(leaveData).find(key => leaveData[key] === true && key !== "saved");
             }
             const row = document.getElementById("leaveTableBody").rows[index];
-            row.cells[12].querySelector("button:nth-child(2)").disabled = false; // Ενεργοποίηση Delete
+            row.cells[13].querySelector("button:nth-child(2)").disabled = false;
             updateTotals();
         }
 
-        // Διαγραφή άδειας
         async function deleteLeave(index) {
             if (confirm("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτήν την άδεια;")) {
                 const leave = leaves[index];
@@ -385,19 +374,50 @@
             }
         }
 
-        // Ενημέρωση συνόλων
+        async function deleteSelectedLeaves() {
+            const selected = document.querySelectorAll(".select-leave:checked");
+            if (selected.length === 0) {
+                alert("Επιλέξτε τουλάχιστον μία άδεια για διαγραφή!");
+                return;
+            }
+            if (confirm("Είστε σίγουροι ότι θέλετε να διαγράψετε τις επιλεγμένες άδειες;")) {
+                const idsToDelete = [];
+                selected.forEach(checkbox => {
+                    const row = checkbox.parentElement.parentElement;
+                    const index = Array.from(row.parentElement.children).indexOf(row);
+                    if (leaves[index].saved) {
+                        idsToDelete.push(leaves[index].id);
+                    }
+                    leaves.splice(index, 1);
+                });
+                if (idsToDelete.length > 0) {
+                    const { error } = await supabase
+                        .from("leaves")
+                        .delete()
+                        .in("id", idsToDelete);
+                    if (error) {
+                        console.error("Error deleting selected leaves:", error);
+                        return;
+                    }
+                }
+                renderLeaveTable();
+                updateTotals();
+            }
+        }
+
         async function updateTotals() {
-            const entitled = parseInt(document.getElementById("entitled").value) || 0;
+            const baseEntitled = 25;
             const previous = parseInt(document.getElementById("previous").value) || 0;
             selectedEmployee.previous = previous;
-            const total = entitled + previous;
-            document.getElementById("total").textContent = total;
-
             let regularDays = 0;
-            leaves.forEach((leave) => {
+            leaves.forEach(leave => {
                 if (leave.saved && leave.regular) regularDays += leave.days;
             });
-            document.getElementById("remaining").textContent = total - regularDays;
+            const entitled = baseEntitled - regularDays;
+            document.getElementById("entitled").textContent = entitled;
+            const total = entitled + previous;
+            document.getElementById("total").textContent = total;
+            document.getElementById("remaining").textContent = total;
 
             await supabase
                 .from("employees")
@@ -405,25 +425,25 @@
                 .eq("id", selectedEmployee.id);
         }
 
-        // Εμφάνιση πίνακα αδειών
         function renderLeaveTable() {
             const tbody = document.getElementById("leaveTableBody");
             tbody.innerHTML = "";
             leaves.forEach((leave, index) => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
+                    <td><input type="checkbox" class="select-leave"></td>
                     <td>${index + 1}</td>
-                    <td><input type="date" value="${leave.from_date}" onchange="calculateDays(this, ${index})"></td>
-                    <td><input type="date" value="${leave.to_date}" onchange="calculateDays(this, ${index})"></td>
+                    <td><input type="date" value="${leave.from_date}" onchange="calculateDays(this, ${index})" title="${formatDate(leave.from_date)}"></td>
+                    <td><input type="date" value="${leave.to_date}" onchange="calculateDays(this, ${index})" title="${formatDate(leave.to_date)}"></td>
                     <td><span class="days">${leave.days}</span></td>
-                    <td><input type="checkbox" ${leave.regular ? "checked" : ""} onchange="updateLeave(${index})"></td>
-                    <td><input type="checkbox" ${leave.sick ? "checked" : ""} onchange="updateLeave(${index})"></td>
-                    <td><input type="checkbox" ${leave.parental ? "checked" : ""} onchange="updateLeave(${index})"></td>
-                    <td><input type="checkbox" ${leave.educational ? "checked" : ""} onchange="updateLeave(${index})"></td>
-                    <td><input type="checkbox" ${leave.special ? "checked" : ""} onchange="updateLeave(${index})"></td>
-                    <td><input type="checkbox" ${leave.blood_donation ? "checked" : ""} onchange="updateLeave(${index})"></td>
-                    <td><input type="checkbox" ${leave.day_off ? "checked" : ""} onchange="updateLeave(${index})"></td>
-                    <td><input type="checkbox" ${leave.other ? "checked" : ""} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="regular" ${leave.type === "regular" ? "checked" : ""} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="sick" ${leave.type === "sick" ? "checked" : ""} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="parental" ${leave.type === "parental" ? "checked" : ""} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="educational" ${leave.type === "educational" ? "checked" : ""} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="special" ${leave.type === "special" ? "checked" : ""} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="blood_donation" ${leave.type === "blood_donation" ? "checked" : ""} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="day_off" ${leave.type === "day_off" ? "checked" : ""} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="other" ${leave.type === "other" ? "checked" : ""} onchange="updateLeave(${index})"></td>
                     <td class="leave-actions">
                         <button onclick="saveLeave(${index})">Save</button>
                         <button onclick="deleteLeave(${index})" ${leave.saved ? "" : "disabled"}>Delete</button>
@@ -433,7 +453,6 @@
             });
         }
 
-        // Εκτύπωση αδειών
         function printLeaves() {
             window.print();
         }
