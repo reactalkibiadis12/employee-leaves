@@ -5,21 +5,190 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Διαχείριση Αδειών Εργαζομένων</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .employee-list { margin-bottom: 20px; }
-        .employee { display: flex; align-items: center; padding: 10px; border: 1px solid #ccc; margin: 5px 0; cursor: pointer; }
-        .employee:hover { background-color: #f0f0f0; }
-        .employee.selected { background-color: #d0e8ff; border: 2px solid #007bff; }
-        .employee button { margin-left: 10px; padding: 5px 10px; }
-        .details { display: none; border: 1px solid #ddd; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        th { background-color: #f2f2f2; }
-        .form-container, .edit-form { margin-bottom: 20px; display: none; }
-        .edit-form { border: 1px solid #ccc; padding: 10px; background-color: #f9f9f9; }
-        .leave-actions { display: flex; gap: 5px; }
-        .dropdown { margin-bottom: 20px; }
-        .report { margin-top: 20px; border: 1px solid #ddd; padding: 10px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f7fa;
+            color: #333;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown {
+            margin-bottom: 20px;
+        }
+
+        .dropdown button, .form-container button, .edit-form button, .details button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        .dropdown button:hover, .form-container button:hover, .edit-form button:hover, .details button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .employee-dropdown {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .employee-dropdown select {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fff;
+            cursor: pointer;
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="gray" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            transition: border-color 0.3s;
+        }
+
+        .employee-dropdown select:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+
+        .form-container, .edit-form {
+            margin-bottom: 20px;
+            display: none;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-container input, .edit-form input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-container input:focus, .edit-form input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        .details {
+            display: none;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .leave-actions button {
+            padding: 8px 12px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .leave-actions button:first-child {
+            background-color: #2ecc71;
+        }
+
+        .leave-actions button:first-child:hover {
+            background-color: #27ae60;
+        }
+
+        .leave-actions button:last-child {
+            background-color: #e74c3c;
+        }
+
+        .leave-actions button:last-child:hover {
+            background-color: #c0392b;
+        }
+
+        .summary label {
+            font-weight: 500;
+            margin: 5px 0;
+            display: block;
+        }
+
+        .summary input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100px;
+        }
+
+        .report {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .report p {
+            margin: 5px 0;
+        }
+
         @media print {
             body * { visibility: hidden; }
             .print-header, .print-header *, #leaveTable, #leaveTable * { visibility: visible; }
@@ -29,63 +198,70 @@
     </style>
 </head>
 <body>
-    <h1>Λίστα Εργαζομένων</h1>
-    <div class="dropdown">
-        <button onclick="toggleForm()">Προσθήκη Εργαζομένου ▼</button>
-    </div>
-    <div class="form-container" id="addEmployeeForm">
-        <h3>Προσθήκη Νέου Εργαζομένου</h3>
-        <input type="text" id="surname" placeholder="Επώνυμο"><br>
-        <input type="text" id="name" placeholder="Όνομα"><br>
-        <input type="text" id="afm" placeholder="ΑΦΜ"><br>
-        <input type="email" id="email" placeholder="Email"><br>
-        <button onclick="addEmployee()">Προσθήκη</button>
-    </div>
-    <div class="employee-list" id="employeeList"></div>
-
-    <div class="edit-form" id="editForm">
-        <h3>Επεξεργασία Εργαζομένου</h3>
-        <input type="text" id="editSurname" placeholder="Επώνυμο"><br>
-        <input type="text" id="editName" placeholder="Όνομα"><br>
-        <input type="text" id="editAfm" placeholder="ΑΦΜ"><br>
-        <input type="email" id="editEmail" placeholder="Email"><br>
-        <button onclick="saveEdit()">Αποθήκευση</button>
-        <button onclick="cancelEdit()">Ακύρωση</button>
-    </div>
-
-    <div class="details" id="employeeDetails">
-        <h2 id="employeeName"></h2>
-        <div class="summary">
-            <label>Δικαιούται <span id="currentYearEntitled"></span>: <span id="entitled"></span></label><br>
-            <label>Υπόλοιπα προηγούμενου έτους: <input type="number" id="previous" min="0" onchange="updateTotals()"></label><br>
-            <label>Σύνολα <span id="currentYearTotal"></span>: <span id="total"></span></label><br>
-            <label>Υπόλοιπα: <span id="remaining"></span></label>
+    <div class="container">
+        <h1>Διαχείριση Αδειών Εργαζομένων</h1>
+        <div class="dropdown">
+            <button onclick="toggleForm()">Προσθήκη Εργαζομένου ▼</button>
         </div>
-        <div class="print-header">
-            <h3 id="printEmployeeDetails"></h3>
+        <div class="form-container" id="addEmployeeForm">
+            <h3>Προσθήκη Νέου Εργαζομένου</h3>
+            <input type="text" id="surname" placeholder="Επώνυμο"><br>
+            <input type="text" id="name" placeholder="Όνομα"><br>
+            <input type="text" id="afm" placeholder="ΑΦΜ"><br>
+            <input type="email" id="email" placeholder="Email"><br>
+            <button onclick="addEmployee()">Προσθήκη</button>
         </div>
-        <table id="leaveTable">
-            <thead>
-                <tr>
-                    <th>Α/Α</th><th>ΑΠΟ</th><th>ΕΩΣ</th><th>ΜΕΡΕΣ</th><th>ΚΑΝΟΝΙΚΗ</th><th>ΑΝΑΡ/ΚΗ</th><th>ΓΟΝΙΚΗ</th><th>ΕΚΠ/ΚΗ</th><th>Υ.Δ</th><th>ΑΙΜΟΔΟΣΙΑ</th><th>ΡΕΠΟ</th><th>ΑΛΛΗ</th><th>ΕΝΕΡΓΕΙΕΣ</th><th>ΥΠΑΛΛΗΛΟΣ</th><th>ΤΜΗΜΑΤΑΡΧΗΣ</th><th>ΠΡΟΪΣΤΑΜΕΝΟΣ</th>
-                </tr>
-            </thead>
-            <tbody id="leaveTableBody"></tbody>
-        </table>
-        <button onclick="addLeaveRow()">Προσθήκη Άδειας</button>
-        <button onclick="printLeaves()">Εκτύπωση Αδειών</button>
-        <button onclick="generateReport()">Δημιουργία Αναφοράς</button>
-        <div class="report" id="leaveReport" style="display: none;">
-            <h3>Αναφορά Αδειών <span id="reportYear"></span></h3>
-            <p>Σύνολο Ημερών Αδειών: <span id="totalLeaveDays"></span></p>
-            <p>Κανονική: <span id="regularDays"></span></p>
-            <p>Αναρρωτική: <span id="sickDays"></span></p>
-            <p>Γονική: <span id="parentalDays"></span></p>
-            <p>Εκπαιδευτική: <span id="educationalDays"></span></p>
-            <p>Υ.Δ: <span id="specialDays"></span></p>
-            <p>Αιμοδοσία: <span id="bloodDonationDays"></span></p>
-            <p>Ρεπό: <span id="dayOffDays"></span></p>
-            <p>Άλλη: <span id="otherDays"></span></p>
+
+        <div class="employee-dropdown" id="employeeDropdown">
+            <select onchange="showDetails(this.value)">
+                <option value="">Επιλέξτε Εργαζόμενο</option>
+            </select>
+        </div>
+
+        <div class="edit-form" id="editForm">
+            <h3>Επεξεργασία Εργαζομένου</h3>
+            <input type="text" id="editSurname" placeholder="Επώνυμο"><br>
+            <input type="text" id="editName" placeholder="Όνομα"><br>
+            <input type="text" id="editAfm" placeholder="ΑΦΜ"><br>
+            <input type="email" id="editEmail" placeholder="Email"><br>
+            <button onclick="saveEdit()">Αποθήκευση</button>
+            <button onclick="cancelEdit()">Ακύρωση</button>
+        </div>
+
+        <div class="details" id="employeeDetails">
+            <h2 id="employeeName"></h2>
+            <div class="summary">
+                <label>Δικαιούται <span id="currentYearEntitled"></span>: <span id="entitled"></span></label>
+                <label>Υπόλοιπα προηγούμενου έτους: <input type="number" id="previous" min="0" onchange="updateTotals()"></label>
+                <label>Σύνολα <span id="currentYearTotal"></span>: <span id="total"></span></label>
+                <label>Υπόλοιπα: <span id="remaining"></span></label>
+            </div>
+            <div class="print-header">
+                <h3 id="printEmployeeDetails"></h3>
+            </div>
+            <table id="leaveTable">
+                <thead>
+                    <tr>
+                        <th>Α/Α</th><th>ΑΠΟ</th><th>ΕΩΣ</th><th>ΜΕΡΕΣ</th><th>ΚΑΝΟΝΙΚΗ</th><th>ΑΝΑΡ/ΚΗ</th><th>ΓΟΝΙΚΗ</th><th>ΕΚΠ/ΚΗ</th><th>Υ.Δ</th><th>ΑΙΜΟΔΟΣΙΑ</th><th>ΡΕΠΟ</th><th>ΑΛΛΗ</th><th>ΕΝΕΡΓΕΙΕΣ</th><th>ΥΠΑΛΛΗΛΟΣ</th><th>ΤΜΗΜΑΤΑΡΧΗΣ</th><th>ΠΡΟΪΣΤΑΜΕΝΟΣ</th>
+                    </tr>
+                </thead>
+                <tbody id="leaveTableBody"></tbody>
+            </table>
+            <button onclick="addLeaveRow()">Προσθήκη Άδειας</button>
+            <button onclick="printLeaves()">Εκτύπωση Αδειών</button>
+            <button onclick="generateReport()">Δημιουργία Αναφοράς</button>
+            <div class="report" id="leaveReport" style="display: none;">
+                <h3>Αναφορά Αδειών <span id="reportYear"></span></h3>
+                <p>Σύνολο Ημερών Αδειών: <span id="totalLeaveDays"></span></p>
+                <p>Κανονική: <span id="regularDays"></span></p>
+                <p>Αναρρωτική: <span id="sickDays"></span></p>
+                <p>Γονική: <span id="parentalDays"></span></p>
+                <p>Εκπαιδευτική: <span id="educationalDays"></span></p>
+                <p>Υ.Δ: <span id="specialDays"></span></p>
+                <p>Αιμοδοσία: <span id="bloodDonationDays"></span></p>
+                <p>Ρεπό: <span id="dayOffDays"></span></p>
+                <p>Άλλη: <span id="otherDays"></span></p>
+            </div>
         </div>
     </div>
 
@@ -117,17 +293,13 @@
                 console.error("Error loading employees:", error);
                 return;
             }
-            const employeeList = document.getElementById("employeeList");
-            employeeList.innerHTML = "";
+            const dropdown = document.querySelector("#employeeDropdown select");
+            dropdown.innerHTML = '<option value="">Επιλέξτε Εργαζόμενο</option>';
             data.forEach((emp) => {
-                const div = document.createElement("div");
-                div.className = `employee ${selectedEmployee && selectedEmployee.id === emp.id ? 'selected' : ''}`;
-                div.innerHTML = `
-                    <span onclick="showDetails(${emp.id})">${emp.surname} ${emp.name} | ${emp.afm} | ${emp.email}</span>
-                    <button onclick="editEmployee(${emp.id})">Επεξεργασία</button>
-                    <button onclick="deleteEmployee(${emp.id})">Διαγραφή</button>
-                `;
-                employeeList.appendChild(div);
+                const option = document.createElement("option");
+                option.value = emp.id;
+                option.textContent = `${emp.surname} ${emp.name} | ${emp.afm} | ${emp.email}`;
+                dropdown.appendChild(option);
             });
         }
         loadEmployees();
@@ -186,23 +358,28 @@
             }
         }
 
-        async function editEmployee(id) {
-            const { data, error } = await supabase
-                .from("employees")
-                .select("*")
-                .eq("id", id)
-                .single();
-            if (error) {
-                console.error("Error fetching employee for edit:", error);
-                return;
-            }
-            editingEmployee = data;
-            document.getElementById("editSurname").value = data.surname;
-            document.getElementById("editName").value = data.name;
-            document.getElementById("editAfm").value = data.afm;
-            document.getElementById("editEmail").value = data.email;
-            document.getElementById("editForm").style.display = "block";
-        }
+       async function editEmployee(id) {
+    const { data, error } = await supabase
+        .from("employees")
+        .select("*")
+        .eq("id", id)
+        .single();
+    if (error) {
+        console.error("Error fetching employee for edit:", error);
+        return;
+    }
+    editingEmployee = data;
+    document.getElementById("editSurname").value = data.surname;
+    document.getElementById("editName").value = data.name;
+    document.getElementById("editAfm").value = data.afm;
+    document.getElementById("editEmail").value = data.email;
+    document.getElementById("editForm").style.display = "block";
+    // Ενημέρωση του dropdown για να παραμένει η επιλογή
+    const dropdown = document.querySelector("#employeeDropdown select");
+    dropdown.value = id;
+    // Κρύψιμο του dropdown (προαιρετικά, αν θέλεις να κρύβεται εντελώς)
+    // document.getElementById("employeeDropdown").style.display = "none";
+}
 
         async function saveEdit() {
             const surname = document.getElementById("editSurname").value;
@@ -231,11 +408,46 @@
         }
 
         function cancelEdit() {
-            document.getElementById("editForm").style.display = "none";
-            editingEmployee = null;
+    document.getElementById("editForm").style.display = "none";
+    editingEmployee = null;
+    // Εμφάνιση του dropdown ξανά
+    document.getElementById("employeeDropdown").style.display = "block";
+}
+
+async function saveEdit() {
+    const surname = document.getElementById("editSurname").value;
+    const name = document.getElementById("editName").value;
+    const afm = document.getElementById("editAfm").value;
+    const email = document.getElementById("editEmail").value;
+    if (surname && name && afm && email) {
+        const { error } = await supabase
+            .from("employees")
+            .update({ surname, name, afm, email })
+            .eq("id", editingEmployee.id);
+        if (error) {
+            console.error("Error updating employee:", error);
+            return;
         }
+        loadEmployees();
+        document.getElementById("editForm").style.display = "none";
+        if (selectedEmployee && selectedEmployee.id === editingEmployee.id) {
+            selectedEmployee = { ...selectedEmployee, surname, name, afm, email };
+            document.getElementById("employeeName").textContent = `${surname} ${name}`;
+        }
+        editingEmployee = null;
+        // Εμφάνιση του dropdown ξανά
+        document.getElementById("employeeDropdown").style.display = "block";
+    } else {
+        alert("Συμπληρώστε όλα τα πεδία!");
+    }
+}
 
         async function showDetails(id) {
+            if (!id) {
+                document.getElementById("employeeDetails").style.display = "none";
+                selectedEmployee = null;
+                return;
+            }
             const { data, error } = await supabase
                 .from("employees")
                 .select("*")
@@ -265,7 +477,6 @@
             }
             leaves = leavesData.map(leave => ({ ...leave, saved: true }));
             renderLeaveTable();
-            loadEmployees(); // Ενημερώνει την ένδειξη επιλογής
         }
 
         function addLeaveRow() {
