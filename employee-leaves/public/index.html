@@ -7,13 +7,15 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .employee-list { margin-bottom: 20px; }
-        .employee { cursor: pointer; padding: 10px; border: 1px solid #ccc; margin: 5px 0; }
+        .employee { display: flex; align-items: center; padding: 10px; border: 1px solid #ccc; margin: 5px 0; cursor: pointer; }
         .employee:hover { background-color: #f0f0f0; }
+        .employee button { margin-left: 10px; padding: 5px 10px; }
         .details { display: none; border: 1px solid #ddd; padding: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
         th { background-color: #f2f2f2; }
-        .form-container { margin-bottom: 20px; }
+        .form-container, .edit-form { margin-bottom: 20px; }
+        .edit-form { display: none; border: 1px solid #ccc; padding: 10px; background-color: #f9f9f9; }
     </style>
 </head>
 <body>
@@ -27,6 +29,16 @@
         <button onclick="addEmployee()">Προσθήκη</button>
     </div>
     <div class="employee-list" id="employeeList"></div>
+
+    <div class="edit-form" id="editForm">
+        <h3>Επεξεργασία Εργαζομένου</h3>
+        <input type="text" id="editSurname" placeholder="Επώνυμο"><br>
+        <input type="text" id="editName" placeholder="Όνομα"><br>
+        <input type="text" id="editAfm" placeholder="ΑΦΜ"><br>
+        <input type="email" id="editEmail" placeholder="Email"><br>
+        <button onclick="saveEdit()">Αποθήκευση</button>
+        <button onclick="cancelEdit()">Ακύρωση</button>
+    </div>
 
     <div class="details" id="employeeDetails">
         <h2 id="employeeName"></h2>
@@ -47,30 +59,37 @@
         <button onclick="addLeaveRow()">Προσθήκη Άδειας</button>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Φόρτωση του Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script>
-        const supabaseUrl = "https://nsrksmlqruogmckxpqer.supabase.co"; // Αντικατέστησε με το δικό σου
-        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zcmtzbWxxcnVvZ21ja3hwcWVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NjYwNjQsImV4cCI6MjA1NzM0MjA2NH0.NydawPjtyBG83qH79uY6rWqCFZleJ6zfo-ZgkRw5QoY"; // Αντικατέστησε με το δικό σου
-        const supabase = Supabase.createClient(supabaseUrl, supabaseKey);
+        // Δημιουργία του Supabase client με τα δικά σου στοιχεία
+        const supabaseUrl = "https://nsrksmlqruogmckxpqer.supabase.co";
+        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zcmtzbWxxcnVvZ21ja3hwcWVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NjYwNjQsImV4cCI6MjA1NzM0MjA2NH0.NydawPjtyBG83qH79uY6rWqCFZleJ6zfo-ZgkRw5QoY";
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         let selectedEmployee = null;
         let leaves = [];
+        let editingEmployee = null;
 
         // Φόρτωση εργαζομένων
         async function loadEmployees() {
             const { data, error } = await supabase.from("employees").select("*");
-            if (error) console.error(error);
-            else {
-                const employeeList = document.getElementById("employeeList");
-                employeeList.innerHTML = "";
-                data.forEach((emp) => {
-                    const div = document.createElement("div");
-                    div.className = "employee";
-                    div.textContent = `${emp.surname} ${emp.name} | ${emp.afm} | ${emp.email}`;
-                    div.onclick = () => showDetails(emp);
-                    employeeList.appendChild(div);
-                });
+            if (error) {
+                console.error("Error loading employees:", error);
+                return;
             }
+            const employeeList = document.getElementById("employeeList");
+            employeeList.innerHTML = "";
+            data.forEach((emp) => {
+                const div = document.createElement("div");
+                div.className = "employee";
+                div.innerHTML = `
+                    <span onclick="showDetails(${emp.id})">${emp.surname} ${emp.name} | ${emp.afm} | ${emp.email}</span>
+                    <button onclick="editEmployee(${emp.id})">Επεξεργασία</button>
+                    <button onclick="deleteEmployee(${emp.id})">Διαγραφή</button>
+                `;
+                employeeList.appendChild(div);
+            });
         }
         loadEmployees();
 
@@ -84,35 +103,131 @@
                 const { error } = await supabase.from("employees").insert({
                     surname, name, afm, email, previous: 0
                 });
-                if (error) console.error(error);
-                else {
-                    loadEmployees();
-                    document.getElementById("surname").value = "";
-                    document.getElementById("name").value = "";
-                    document.getElementById("afm").value = "";
-                    document.getElementById("email").value = "";
+                if (error) {
+                    console.error("Error adding employee:", error);
+                    return;
                 }
+                loadEmployees();
+                document.getElementById("surname").value = "";
+                document.getElementById("name").value = "";
+                document.getElementById("afm").value = "";
+                document.getElementById("email").value = "";
             } else {
                 alert("Συμπληρώστε όλα τα πεδία!");
             }
         }
 
-        // Εμφάνιση λεπτομερειών
-        async function showDetails(emp) {
-            selectedEmployee = emp;
-            document.getElementById("employeeDetails").style.display = "block";
-            document.getElementById("employeeName").textContent = `${emp.surname} ${emp.name}`;
-            document.getElementById("previous").value = emp.previous || 0;
+        // Διαγραφή εργαζομένου
+        async function deleteEmployee(id) {
+            if (confirm("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτόν τον εργαζόμενο;")) {
+                // Διαγραφή αδειών του εργαζομένου πρώτα
+                const { error: leavesError } = await supabase
+                    .from("leaves")
+                    .delete()
+                    .eq("employee_id", id);
+                if (leavesError) {
+                    console.error("Error deleting leaves:", leavesError);
+                    return;
+                }
+                // Διαγραφή του εργαζομένου
+                const { error } = await supabase
+                    .from("employees")
+                    .delete()
+                    .eq("id", id);
+                if (error) {
+                    console.error("Error deleting employee:", error);
+                    return;
+                }
+                loadEmployees();
+                if (selectedEmployee && selectedEmployee.id === id) {
+                    document.getElementById("employeeDetails").style.display = "none";
+                    selectedEmployee = null;
+                }
+                if (editingEmployee && editingEmployee.id === id) {
+                    document.getElementById("editForm").style.display = "none";
+                    editingEmployee = null;
+                }
+            }
+        }
+
+        // Επεξεργασία εργαζομένου
+        async function editEmployee(id) {
             const { data, error } = await supabase
+                .from("employees")
+                .select("*")
+                .eq("id", id)
+                .single();
+            if (error) {
+                console.error("Error fetching employee for edit:", error);
+                return;
+            }
+            editingEmployee = data;
+            document.getElementById("editSurname").value = data.surname;
+            document.getElementById("editName").value = data.name;
+            document.getElementById("editAfm").value = data.afm;
+            document.getElementById("editEmail").value = data.email;
+            document.getElementById("editForm").style.display = "block";
+        }
+
+        // Αποθήκευση αλλαγών στην επεξεργασία
+        async function saveEdit() {
+            const surname = document.getElementById("editSurname").value;
+            const name = document.getElementById("editName").value;
+            const afm = document.getElementById("editAfm").value;
+            const email = document.getElementById("editEmail").value;
+            if (surname && name && afm && email) {
+                const { error } = await supabase
+                    .from("employees")
+                    .update({ surname, name, afm, email })
+                    .eq("id", editingEmployee.id);
+                if (error) {
+                    console.error("Error updating employee:", error);
+                    return;
+                }
+                loadEmployees();
+                document.getElementById("editForm").style.display = "none";
+                if (selectedEmployee && selectedEmployee.id === editingEmployee.id) {
+                    selectedEmployee = { ...selectedEmployee, surname, name, afm, email };
+                    document.getElementById("employeeName").textContent = `${surname} ${name}`;
+                }
+                editingEmployee = null;
+            } else {
+                alert("Συμπληρώστε όλα τα πεδία!");
+            }
+        }
+
+        // Ακύρωση επεξεργασίας
+        function cancelEdit() {
+            document.getElementById("editForm").style.display = "none";
+            editingEmployee = null;
+        }
+
+        // Εμφάνιση λεπτομερειών
+        async function showDetails(id) {
+            const { data, error } = await supabase
+                .from("employees")
+                .select("*")
+                .eq("id", id)
+                .single();
+            if (error) {
+                console.error("Error loading employee details:", error);
+                return;
+            }
+            selectedEmployee = data;
+            document.getElementById("employeeDetails").style.display = "block";
+            document.getElementById("employeeName").textContent = `${data.surname} ${data.name}`;
+            document.getElementById("previous").value = data.previous || 0;
+            const { data: leavesData, error: leavesError } = await supabase
                 .from("leaves")
                 .select("*")
-                .eq("employee_id", emp.id);
-            if (error) console.error(error);
-            else {
-                leaves = data || [];
-                updateTotals();
-                renderLeaveTable();
+                .eq("employee_id", data.id);
+            if (leavesError) {
+                console.error("Error loading leaves:", leavesError);
+                return;
             }
+            leaves = leavesData || [];
+            updateTotals();
+            renderLeaveTable();
         }
 
         // Προσθήκη άδειας
@@ -152,10 +267,11 @@
                 other: false
             };
             const { data, error } = await supabase.from("leaves").insert(newLeave).select();
-            if (error) console.error(error);
-            else {
-                leaves.push(data[0]);
+            if (error) {
+                console.error("Error adding leave:", error);
+                return;
             }
+            leaves.push(data[0]);
         }
 
         // Υπολογισμός ημερών
