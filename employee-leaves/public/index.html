@@ -25,11 +25,50 @@
         }
 
         .container {
-            width: 100%; /* Πλήρες πλάτος */
+            width: 100%;
             padding: 20px;
             background: #fff;
             border-radius: 10px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .login-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .login-container button, .logout-btn {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .login-container button:hover, .logout-btn:hover {
+            background-color: #2980b9;
         }
 
         .dropdown {
@@ -147,14 +186,14 @@
             margin-top: 20px;
             background: #fff;
             border-radius: 8px;
-            overflow-x: auto; /* Επιτρέπει οριζόντια κύλιση αν χρειάζεται */
+            overflow-x: auto;
         }
 
         th, td {
             border: 1px solid #ddd;
             padding: 12px;
             text-align: center;
-            white-space: nowrap; /* Αποτρέπει το wrapping κειμένου */
+            white-space: nowrap;
         }
 
         th {
@@ -230,7 +269,16 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div id="loginContainer" class="login-container">
+        <h2>Σύνδεση Διαχειριστή</h2>
+        <input type="email" id="loginEmail" placeholder="Email">
+        <input type="password" id="loginPassword" placeholder="Κωδικός">
+        <button onclick="login()">Σύνδεση</button>
+        <p id="loginError" style="color: red; display: none;"></p>
+    </div>
+
+    <div id="mainContainer" class="container" style="display: none;">
+        <button class="logout-btn" onclick="logout()">Αποσύνδεση</button>
         <h1>Διαχείριση Αδειών Εργαζομένων</h1>
         <div class="dropdown">
             <button onclick="toggleForm()">Προσθήκη Εργαζομένου ▼</button>
@@ -311,6 +359,74 @@
         let leaves = [];
         let editingEmployee = null;
         const currentYear = new Date().getFullYear();
+        const adminEmail = "admin@example.com"; // Αντικατέστησε με το email του διαχειριστή
+
+        // Έλεγχος συνδεσιμότητας κατά το φόρτωμα της σελίδας
+        async function checkAuth() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const user = session.user;
+                if (user.email === adminEmail) {
+                    document.getElementById("loginContainer").style.display = "none";
+                    document.getElementById("mainContainer").style.display = "block";
+                    loadEmployees();
+                } else {
+                    alert("Μόνο ο διαχειριστής μπορεί να έχει πρόσβαση!");
+                    logout();
+                }
+            } else {
+                document.getElementById("loginContainer").style.display = "block";
+                document.getElementById("mainContainer").style.display = "none";
+            }
+        }
+
+        // Login συνάρτηση
+        async function login() {
+            const email = document.getElementById("loginEmail").value;
+            const password = document.getElementById("loginPassword").value;
+            const errorMsg = document.getElementById("loginError");
+
+            if (!email || !password) {
+                errorMsg.textContent = "Παρακαλώ συμπληρώστε όλα τα πεδία!";
+                errorMsg.style.display = "block";
+                return;
+            }
+
+            const { error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                errorMsg.textContent = "Λάθος email ή κωδικός!";
+                errorMsg.style.display = "block";
+                return;
+            }
+
+            if (email !== adminEmail) {
+                errorMsg.textContent = "Μόνο ο διαχειριστής μπορεί να συνδεθεί!";
+                errorMsg.style.display = "block";
+                await supabase.auth.signOut();
+                return;
+            }
+
+            document.getElementById("loginContainer").style.display = "none";
+            document.getElementById("mainContainer").style.display = "block";
+            loadEmployees();
+        }
+
+        // Logout συνάρτηση
+        async function logout() {
+            await supabase.auth.signOut();
+            document.getElementById("loginContainer").style.display = "block";
+            document.getElementById("mainContainer").style.display = "none";
+            document.getElementById("loginEmail").value = "";
+            document.getElementById("loginPassword").value = "";
+            document.getElementById("loginError").style.display = "none";
+        }
+
+        // Εκτέλεση ελέγχου κατά το φόρτωμα της σελίδας
+        checkAuth();
 
         function formatDate(dateStr) {
             if (!dateStr) return "";
@@ -338,7 +454,6 @@
                 dropdown.appendChild(option);
             });
         }
-        loadEmployees();
 
         async function addEmployee() {
             const surname = document.getElementById("surname").value;
