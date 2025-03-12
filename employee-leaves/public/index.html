@@ -25,8 +25,7 @@
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
+            width: 100%; /* Πλήρες πλάτος */
             padding: 20px;
             background: #fff;
             border-radius: 10px;
@@ -55,10 +54,13 @@
         .employee-dropdown {
             position: relative;
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .employee-dropdown select {
-            width: 100%;
+            flex: 1;
             padding: 12px;
             font-size: 16px;
             border: 1px solid #ddd;
@@ -76,6 +78,35 @@
             border-color: #3498db;
             outline: none;
             box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+
+        .employee-actions {
+            display: none;
+            gap: 10px;
+        }
+
+        .employee-actions button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .employee-actions button.edit {
+            background-color: #f39c12;
+        }
+
+        .employee-actions button.edit:hover {
+            background-color: #e67e22;
+        }
+
+        .employee-actions button.delete {
+            background-color: #e74c3c;
+        }
+
+        .employee-actions button.delete:hover {
+            background-color: #c0392b;
         }
 
         .form-container, .edit-form {
@@ -116,13 +147,14 @@
             margin-top: 20px;
             background: #fff;
             border-radius: 8px;
-            overflow: hidden;
+            overflow-x: auto; /* Επιτρέπει οριζόντια κύλιση αν χρειάζεται */
         }
 
         th, td {
             border: 1px solid #ddd;
             padding: 12px;
             text-align: center;
+            white-space: nowrap; /* Αποτρέπει το wrapping κειμένου */
         }
 
         th {
@@ -213,9 +245,13 @@
         </div>
 
         <div class="employee-dropdown" id="employeeDropdown">
-            <select onchange="showDetails(this.value)">
+            <select id="employeeSelect" onchange="showDetails(this.value)">
                 <option value="">Επιλέξτε Εργαζόμενο</option>
             </select>
+            <div class="employee-actions" id="employeeActions">
+                <button class="edit" onclick="editEmployee(selectedEmployee.id)">Επεξεργασία</button>
+                <button class="delete" onclick="deleteEmployee(selectedEmployee.id)">Διαγραφή</button>
+            </div>
         </div>
 
         <div class="edit-form" id="editForm">
@@ -293,7 +329,7 @@
                 console.error("Error loading employees:", error);
                 return;
             }
-            const dropdown = document.querySelector("#employeeDropdown select");
+            const dropdown = document.querySelector("#employeeSelect");
             dropdown.innerHTML = '<option value="">Επιλέξτε Εργαζόμενο</option>';
             data.forEach((emp) => {
                 const option = document.createElement("option");
@@ -347,6 +383,8 @@
                     return;
                 }
                 loadEmployees();
+                document.getElementById("employeeSelect").value = "";
+                document.getElementById("employeeActions").style.display = "none";
                 if (selectedEmployee && selectedEmployee.id === id) {
                     document.getElementById("employeeDetails").style.display = "none";
                     selectedEmployee = null;
@@ -358,28 +396,24 @@
             }
         }
 
-       async function editEmployee(id) {
-    const { data, error } = await supabase
-        .from("employees")
-        .select("*")
-        .eq("id", id)
-        .single();
-    if (error) {
-        console.error("Error fetching employee for edit:", error);
-        return;
-    }
-    editingEmployee = data;
-    document.getElementById("editSurname").value = data.surname;
-    document.getElementById("editName").value = data.name;
-    document.getElementById("editAfm").value = data.afm;
-    document.getElementById("editEmail").value = data.email;
-    document.getElementById("editForm").style.display = "block";
-    // Ενημέρωση του dropdown για να παραμένει η επιλογή
-    const dropdown = document.querySelector("#employeeDropdown select");
-    dropdown.value = id;
-    // Κρύψιμο του dropdown (προαιρετικά, αν θέλεις να κρύβεται εντελώς)
-    // document.getElementById("employeeDropdown").style.display = "none";
-}
+        async function editEmployee(id) {
+            const { data, error } = await supabase
+                .from("employees")
+                .select("*")
+                .eq("id", id)
+                .single();
+            if (error) {
+                console.error("Error fetching employee for edit:", error);
+                return;
+            }
+            editingEmployee = data;
+            document.getElementById("editSurname").value = data.surname;
+            document.getElementById("editName").value = data.name;
+            document.getElementById("editAfm").value = data.afm;
+            document.getElementById("editEmail").value = data.email;
+            document.getElementById("editForm").style.display = "block";
+            document.getElementById("employeeDropdown").style.display = "none";
+        }
 
         async function saveEdit() {
             const surname = document.getElementById("editSurname").value;
@@ -397,9 +431,11 @@
                 }
                 loadEmployees();
                 document.getElementById("editForm").style.display = "none";
+                document.getElementById("employeeDropdown").style.display = "flex";
                 if (selectedEmployee && selectedEmployee.id === editingEmployee.id) {
                     selectedEmployee = { ...selectedEmployee, surname, name, afm, email };
                     document.getElementById("employeeName").textContent = `${surname} ${name}`;
+                    document.getElementById("employeeSelect").value = editingEmployee.id;
                 }
                 editingEmployee = null;
             } else {
@@ -408,43 +444,16 @@
         }
 
         function cancelEdit() {
-    document.getElementById("editForm").style.display = "none";
-    editingEmployee = null;
-    // Εμφάνιση του dropdown ξανά
-    document.getElementById("employeeDropdown").style.display = "block";
-}
-
-async function saveEdit() {
-    const surname = document.getElementById("editSurname").value;
-    const name = document.getElementById("editName").value;
-    const afm = document.getElementById("editAfm").value;
-    const email = document.getElementById("editEmail").value;
-    if (surname && name && afm && email) {
-        const { error } = await supabase
-            .from("employees")
-            .update({ surname, name, afm, email })
-            .eq("id", editingEmployee.id);
-        if (error) {
-            console.error("Error updating employee:", error);
-            return;
+            document.getElementById("editForm").style.display = "none";
+            document.getElementById("employeeDropdown").style.display = "flex";
+            editingEmployee = null;
         }
-        loadEmployees();
-        document.getElementById("editForm").style.display = "none";
-        if (selectedEmployee && selectedEmployee.id === editingEmployee.id) {
-            selectedEmployee = { ...selectedEmployee, surname, name, afm, email };
-            document.getElementById("employeeName").textContent = `${surname} ${name}`;
-        }
-        editingEmployee = null;
-        // Εμφάνιση του dropdown ξανά
-        document.getElementById("employeeDropdown").style.display = "block";
-    } else {
-        alert("Συμπληρώστε όλα τα πεδία!");
-    }
-}
 
         async function showDetails(id) {
+            const actions = document.getElementById("employeeActions");
             if (!id) {
                 document.getElementById("employeeDetails").style.display = "none";
+                actions.style.display = "none";
                 selectedEmployee = null;
                 return;
             }
@@ -459,6 +468,7 @@ async function saveEdit() {
             }
             selectedEmployee = data;
             document.getElementById("employeeDetails").style.display = "block";
+            actions.style.display = "flex";
             document.getElementById("employeeName").textContent = `${data.surname} ${data.name}`;
             document.getElementById("printEmployeeDetails").textContent = `Εργαζόμενος: ${data.surname} ${data.name} | ΑΦΜ: ${data.afm} | Email: ${data.email}`;
             document.getElementById("previous").value = data.previous || 0;
