@@ -210,35 +210,35 @@
             editingEmployee = null;
         }
 
-        async function showDetails(id) {
-            const { data, error } = await supabase
-                .from("employees")
-                .select("*")
-                .eq("id", id)
-                .single();
-            if (error) {
-                console.error("Error loading employee details:", error);
-                return;
-            }
-            selectedEmployee = data;
-            document.getElementById("employeeDetails").style.display = "block";
-            document.getElementById("employeeName").textContent = `${data.surname} ${data.name}`;
-            document.getElementById("printEmployeeDetails").textContent = `Εργαζόμενος: ${data.surname} ${data.name} | ΑΦΜ: ${data.afm} | Email: ${data.email}`;
-            document.getElementById("previous").value = data.previous || 0;
-            document.getElementById("entitled").textContent = data.entitled_2025;
-            document.getElementById("total").textContent = data.total_2025;
-            document.getElementById("remaining").textContent = data.remaining;
-            const { data: leavesData, error: leavesError } = await supabase
-                .from("leaves")
-                .select("*")
-                .eq("employee_id", data.id);
-            if (leavesError) {
-                console.error("Error loading leaves:", leavesError);
-                return;
-            }
-            leaves = leavesData || [];
-            renderLeaveTable();
-        }
+    async function showDetails(id) {
+    const { data, error } = await supabase
+        .from("employees")
+        .select("*")
+        .eq("id", id)
+        .single();
+    if (error) {
+        console.error("Error loading employee details:", error);
+        return;
+    }
+    selectedEmployee = data;
+    document.getElementById("employeeDetails").style.display = "block";
+    document.getElementById("employeeName").textContent = `${data.surname} ${data.name}`;
+    document.getElementById("printEmployeeDetails").textContent = `Εργαζόμενος: ${data.surname} ${data.name} | ΑΦΜ: ${data.afm} | Email: ${data.email}`;
+    document.getElementById("previous").value = data.previous || 0;
+    document.getElementById("entitled").textContent = data.entitled_2025;
+    document.getElementById("total").textContent = data.total_2025;
+    document.getElementById("remaining").textContent = data.remaining;
+    const { data: leavesData, error: leavesError } = await supabase
+        .from("leaves")
+        .select("*")
+        .eq("employee_id", data.id);
+    if (leavesError) {
+        console.error("Error loading leaves:", leavesError);
+        return;
+    }
+    leaves = leavesData.map(leave => ({ ...leave, saved: true })); // Βεβαιώνουμε ότι το saved είναι true και διατηρούμε το id
+    renderLeaveTable();
+}
 
         function addLeaveRow() {
             const tbody = document.getElementById("leaveTableBody");
@@ -352,27 +352,30 @@
             await updateTotals();
         }
 
-        async function deleteLeave(index) {
-            const leave = leaves[index];
-            if (!leave.saved) {
-                leaves.splice(index, 1);
-                renderLeaveTable();
-                return;
-            }
-            if (confirm("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτήν την άδεια;")) {
-                const { error } = await supabase
-                    .from("leaves")
-                    .delete()
-                    .eq("id", leave.id);
-                if (error) {
-                    console.error("Error deleting leave:", error);
-                    return;
-                }
-                leaves.splice(index, 1);
-                renderLeaveTable();
-                await updateTotals();
-            }
+       async function deleteLeave(index) {
+    const leave = leaves[index];
+    if (!leave.saved) {
+        leaves.splice(index, 1);
+        renderLeaveTable();
+        return;
+    }
+    if (confirm("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτήν την άδεια;")) {
+        console.log("Attempting to delete leave with ID:", leave.id); // Debugging
+        const { error } = await supabase
+            .from("leaves")
+            .delete()
+            .eq("id", leave.id);
+        if (error) {
+            console.error("Error deleting leave from database:", error.message);
+            alert("Σφάλμα κατά τη διαγραφή: " + error.message);
+            return;
         }
+        console.log("Leave deleted successfully, ID:", leave.id);
+        leaves.splice(index, 1);
+        renderLeaveTable();
+        await updateTotals();
+    }
+}
 
         async function updateTotals() {
             const previous = parseInt(document.getElementById("previous").value) || 0;
