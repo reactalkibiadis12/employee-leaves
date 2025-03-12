@@ -9,15 +9,17 @@
         .employee-list { margin-bottom: 20px; }
         .employee { display: flex; align-items: center; padding: 10px; border: 1px solid #ccc; margin: 5px 0; cursor: pointer; }
         .employee:hover { background-color: #f0f0f0; }
+        .employee.selected { background-color: #d0e8ff; border: 2px solid #007bff; }
         .employee button { margin-left: 10px; padding: 5px 10px; }
         .details { display: none; border: 1px solid #ddd; padding: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
         th { background-color: #f2f2f2; }
-        .form-container, .edit-form { margin-bottom: 20px; }
-        .edit-form { display: none; border: 1px solid #ccc; padding: 10px; background-color: #f9f9f9; }
+        .form-container, .edit-form { margin-bottom: 20px; display: none; }
+        .edit-form { border: 1px solid #ccc; padding: 10px; background-color: #f9f9f9; }
         .leave-actions { display: flex; gap: 5px; }
-        .print-header { display: none; }
+        .dropdown { margin-bottom: 20px; }
+        .report { margin-top: 20px; border: 1px solid #ddd; padding: 10px; }
         @media print {
             body * { visibility: hidden; }
             .print-header, .print-header *, #leaveTable, #leaveTable * { visibility: visible; }
@@ -28,7 +30,10 @@
 </head>
 <body>
     <h1>Λίστα Εργαζομένων</h1>
-    <div class="form-container">
+    <div class="dropdown">
+        <button onclick="toggleForm()">Προσθήκη Εργαζομένου ▼</button>
+    </div>
+    <div class="form-container" id="addEmployeeForm">
         <h3>Προσθήκη Νέου Εργαζομένου</h3>
         <input type="text" id="surname" placeholder="Επώνυμο"><br>
         <input type="text" id="name" placeholder="Όνομα"><br>
@@ -51,9 +56,9 @@
     <div class="details" id="employeeDetails">
         <h2 id="employeeName"></h2>
         <div class="summary">
-            <label>Δικαιούται 2025: <span id="entitled"></span></label><br>
+            <label>Δικαιούται <span id="currentYearEntitled"></span>: <span id="entitled"></span></label><br>
             <label>Υπόλοιπα προηγούμενου έτους: <input type="number" id="previous" min="0" onchange="updateTotals()"></label><br>
-            <label>Σύνολα 2025: <span id="total"></span></label><br>
+            <label>Σύνολα <span id="currentYearTotal"></span>: <span id="total"></span></label><br>
             <label>Υπόλοιπα: <span id="remaining"></span></label>
         </div>
         <div class="print-header">
@@ -69,6 +74,19 @@
         </table>
         <button onclick="addLeaveRow()">Προσθήκη Άδειας</button>
         <button onclick="printLeaves()">Εκτύπωση Αδειών</button>
+        <button onclick="generateReport()">Δημιουργία Αναφοράς</button>
+        <div class="report" id="leaveReport" style="display: none;">
+            <h3>Αναφορά Αδειών <span id="reportYear"></span></h3>
+            <p>Σύνολο Ημερών Αδειών: <span id="totalLeaveDays"></span></p>
+            <p>Κανονική: <span id="regularDays"></span></p>
+            <p>Αναρρωτική: <span id="sickDays"></span></p>
+            <p>Γονική: <span id="parentalDays"></span></p>
+            <p>Εκπαιδευτική: <span id="educationalDays"></span></p>
+            <p>Υ.Δ: <span id="specialDays"></span></p>
+            <p>Αιμοδοσία: <span id="bloodDonationDays"></span></p>
+            <p>Ρεπό: <span id="dayOffDays"></span></p>
+            <p>Άλλη: <span id="otherDays"></span></p>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -80,11 +98,17 @@
         let selectedEmployee = null;
         let leaves = [];
         let editingEmployee = null;
+        const currentYear = new Date().getFullYear();
 
         function formatDate(dateStr) {
             if (!dateStr) return "";
             const date = new Date(dateStr);
             return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
+        }
+
+        function toggleForm() {
+            const form = document.getElementById("addEmployeeForm");
+            form.style.display = form.style.display === "block" ? "none" : "block";
         }
 
         async function loadEmployees() {
@@ -97,7 +121,7 @@
             employeeList.innerHTML = "";
             data.forEach((emp) => {
                 const div = document.createElement("div");
-                div.className = "employee";
+                div.className = `employee ${selectedEmployee && selectedEmployee.id === emp.id ? 'selected' : ''}`;
                 div.innerHTML = `
                     <span onclick="showDetails(${emp.id})">${emp.surname} ${emp.name} | ${emp.afm} | ${emp.email}</span>
                     <button onclick="editEmployee(${emp.id})">Επεξεργασία</button>
@@ -126,6 +150,7 @@
                 document.getElementById("name").value = "";
                 document.getElementById("afm").value = "";
                 document.getElementById("email").value = "";
+                toggleForm();
             } else {
                 alert("Συμπληρώστε όλα τα πεδία!");
             }
@@ -210,35 +235,38 @@
             editingEmployee = null;
         }
 
-    async function showDetails(id) {
-    const { data, error } = await supabase
-        .from("employees")
-        .select("*")
-        .eq("id", id)
-        .single();
-    if (error) {
-        console.error("Error loading employee details:", error);
-        return;
-    }
-    selectedEmployee = data;
-    document.getElementById("employeeDetails").style.display = "block";
-    document.getElementById("employeeName").textContent = `${data.surname} ${data.name}`;
-    document.getElementById("printEmployeeDetails").textContent = `Εργαζόμενος: ${data.surname} ${data.name} | ΑΦΜ: ${data.afm} | Email: ${data.email}`;
-    document.getElementById("previous").value = data.previous || 0;
-    document.getElementById("entitled").textContent = data.entitled_2025;
-    document.getElementById("total").textContent = data.total_2025;
-    document.getElementById("remaining").textContent = data.remaining;
-    const { data: leavesData, error: leavesError } = await supabase
-        .from("leaves")
-        .select("*")
-        .eq("employee_id", data.id);
-    if (leavesError) {
-        console.error("Error loading leaves:", leavesError);
-        return;
-    }
-    leaves = leavesData.map(leave => ({ ...leave, saved: true })); // Βεβαιώνουμε ότι το saved είναι true και διατηρούμε το id
-    renderLeaveTable();
-}
+        async function showDetails(id) {
+            const { data, error } = await supabase
+                .from("employees")
+                .select("*")
+                .eq("id", id)
+                .single();
+            if (error) {
+                console.error("Error loading employee details:", error);
+                return;
+            }
+            selectedEmployee = data;
+            document.getElementById("employeeDetails").style.display = "block";
+            document.getElementById("employeeName").textContent = `${data.surname} ${data.name}`;
+            document.getElementById("printEmployeeDetails").textContent = `Εργαζόμενος: ${data.surname} ${data.name} | ΑΦΜ: ${data.afm} | Email: ${data.email}`;
+            document.getElementById("previous").value = data.previous || 0;
+            document.getElementById("entitled").textContent = data.entitled_2025;
+            document.getElementById("total").textContent = data.total_2025;
+            document.getElementById("remaining").textContent = data.remaining;
+            document.getElementById("currentYearEntitled").textContent = currentYear;
+            document.getElementById("currentYearTotal").textContent = currentYear;
+            const { data: leavesData, error: leavesError } = await supabase
+                .from("leaves")
+                .select("*")
+                .eq("employee_id", data.id);
+            if (leavesError) {
+                console.error("Error loading leaves:", leavesError);
+                return;
+            }
+            leaves = leavesData.map(leave => ({ ...leave, saved: true }));
+            renderLeaveTable();
+            loadEmployees(); // Ενημερώνει την ένδειξη επιλογής
+        }
 
         function addLeaveRow() {
             const tbody = document.getElementById("leaveTableBody");
@@ -259,7 +287,7 @@
                 <td><input type="radio" name="leave${rowIndex}" value="other" onchange="updateLeave(${rowIndex})"></td>
                 <td class="leave-actions">
                     <button onclick="saveLeave(${rowIndex})">Save</button>
-                    <button onclick="deleteLeave(${rowIndex})">Delete</button>
+                    <button onclick="deleteLeave(${rowIndex})" disabled>Delete</button>
                 </td>
                 <td></td><td></td><td></td>
             `;
@@ -326,56 +354,42 @@
                 day_off: leave.type === "day_off",
                 other: leave.type === "other"
             };
-            if (leave.saved) {
-                const { error } = await supabase
-                    .from("leaves")
-                    .update(leaveData)
-                    .eq("id", leave.id);
-                if (error) {
-                    console.error("Error updating leave:", error);
-                    return;
-                }
-            } else {
-                const { data, error } = await supabase
-                    .from("leaves")
-                    .insert(leaveData)
-                    .select();
-                if (error) {
-                    console.error("Error saving leave:", error);
-                    return;
-                }
-                leaves[index] = data[0];
-                leaves[index].saved = true;
-                leaves[index].type = Object.keys(leaveData).find(key => leaveData[key] === true && key !== "saved");
+            const { data, error } = await supabase
+                .from("leaves")
+                .insert(leaveData)
+                .select();
+            if (error) {
+                console.error("Error saving leave:", error);
+                return;
             }
+            leaves[index] = data[0];
+            leaves[index].saved = true;
+            leaves[index].type = Object.keys(leaveData).find(key => leaveData[key] === true);
             renderLeaveTable();
             await updateTotals();
         }
 
-       async function deleteLeave(index) {
-    const leave = leaves[index];
-    if (!leave.saved) {
-        leaves.splice(index, 1);
-        renderLeaveTable();
-        return;
-    }
-    if (confirm("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτήν την άδεια;")) {
-        console.log("Attempting to delete leave with ID:", leave.id); // Debugging
-        const { error } = await supabase
-            .from("leaves")
-            .delete()
-            .eq("id", leave.id);
-        if (error) {
-            console.error("Error deleting leave from database:", error.message);
-            alert("Σφάλμα κατά τη διαγραφή: " + error.message);
-            return;
+        async function deleteLeave(index) {
+            const leave = leaves[index];
+            if (!leave.saved) {
+                leaves.splice(index, 1);
+                renderLeaveTable();
+                return;
+            }
+            if (confirm("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτήν την άδεια;")) {
+                const { error } = await supabase
+                    .from("leaves")
+                    .delete()
+                    .eq("id", leave.id);
+                if (error) {
+                    console.error("Error deleting leave:", error);
+                    return;
+                }
+                leaves.splice(index, 1);
+                renderLeaveTable();
+                await updateTotals();
+            }
         }
-        console.log("Leave deleted successfully, ID:", leave.id);
-        leaves.splice(index, 1);
-        renderLeaveTable();
-        await updateTotals();
-    }
-}
 
         async function updateTotals() {
             const previous = parseInt(document.getElementById("previous").value) || 0;
@@ -415,19 +429,19 @@
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${index + 1}</td>
-                    <td><input type="date" value="${leave.from_date}" onchange="calculateDays(this, ${index})"></td>
-                    <td><input type="date" value="${leave.to_date}" onchange="calculateDays(this, ${index})"></td>
+                    <td><input type="date" value="${leave.from_date}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"></td>
+                    <td><input type="date" value="${leave.to_date}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"></td>
                     <td><span class="days">${leave.days}</span></td>
-                    <td><input type="radio" name="leave${index}" value="regular" ${leave.regular ? "checked" : ""} onchange="updateLeave(${index})"></td>
-                    <td><input type="radio" name="leave${index}" value="sick" ${leave.sick ? "checked" : ""} onchange="updateLeave(${index})"></td>
-                    <td><input type="radio" name="leave${index}" value="parental" ${leave.parental ? "checked" : ""} onchange="updateLeave(${index})"></td>
-                    <td><input type="radio" name="leave${index}" value="educational" ${leave.educational ? "checked" : ""} onchange="updateLeave(${index})"></td>
-                    <td><input type="radio" name="leave${index}" value="special" ${leave.special ? "checked" : ""} onchange="updateLeave(${index})"></td>
-                    <td><input type="radio" name="leave${index}" value="blood_donation" ${leave.blood_donation ? "checked" : ""} onchange="updateLeave(${index})"></td>
-                    <td><input type="radio" name="leave${index}" value="day_off" ${leave.day_off ? "checked" : ""} onchange="updateLeave(${index})"></td>
-                    <td><input type="radio" name="leave${index}" value="other" ${leave.other ? "checked" : ""} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="regular" ${leave.regular ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="sick" ${leave.sick ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="parental" ${leave.parental ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="educational" ${leave.educational ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="special" ${leave.special ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="blood_donation" ${leave.blood_donation ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="day_off" ${leave.day_off ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="other" ${leave.other ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
                     <td class="leave-actions">
-                        <button onclick="saveLeave(${index})">Save</button>
+                        <button onclick="saveLeave(${index})" ${leave.saved ? 'disabled' : ''}>Save</button>
                         <button onclick="deleteLeave(${index})">Delete</button>
                     </td>
                     <td></td><td></td><td></td>
@@ -438,6 +452,37 @@
 
         function printLeaves() {
             window.print();
+        }
+
+        function generateReport() {
+            let totalDays = 0, regularDays = 0, sickDays = 0, parentalDays = 0, educationalDays = 0, specialDays = 0, bloodDonationDays = 0, dayOffDays = 0, otherDays = 0;
+
+            leaves.forEach(leave => {
+                if (leave.saved) {
+                    totalDays += leave.days;
+                    if (leave.regular) regularDays += leave.days;
+                    if (leave.sick) sickDays += leave.days;
+                    if (leave.parental) parentalDays += leave.days;
+                    if (leave.educational) educationalDays += leave.days;
+                    if (leave.special) specialDays += leave.days;
+                    if (leave.blood_donation) bloodDonationDays += leave.days;
+                    if (leave.day_off) dayOffDays += leave.days;
+                    if (leave.other) otherDays += leave.days;
+                }
+            });
+
+            document.getElementById("reportYear").textContent = currentYear;
+            document.getElementById("totalLeaveDays").textContent = totalDays;
+            document.getElementById("regularDays").textContent = regularDays;
+            document.getElementById("sickDays").textContent = sickDays;
+            document.getElementById("parentalDays").textContent = parentalDays;
+            document.getElementById("educationalDays").textContent = educationalDays;
+            document.getElementById("specialDays").textContent = specialDays;
+            document.getElementById("bloodDonationDays").textContent = bloodDonationDays;
+            document.getElementById("dayOffDays").textContent = dayOffDays;
+            document.getElementById("otherDays").textContent = otherDays;
+
+            document.getElementById("leaveReport").style.display = "block";
         }
     </script>
 </body>
