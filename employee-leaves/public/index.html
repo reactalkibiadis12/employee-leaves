@@ -22,6 +22,7 @@
             body * { visibility: hidden; }
             .print-header, .print-header *, #leaveTable, #leaveTable * { visibility: visible; }
             .print-header { position: absolute; top: 0; left: 0; width: 100%; }
+            .signatures { margin-top: 20px; display: flex; justify-content: space-between; }
             #leaveTable { position: absolute; top: 100px; left: 0; width: 100%; }
             .leave-actions { display: none; }
         }
@@ -59,7 +60,11 @@
         </div>
         <div class="print-header">
             <h3 id="printEmployeeDetails"></h3>
-            <p>Υπάλληλος: ____________________  Τμηματάρχης: ____________________  Προϊστάμενος: ____________________</p>
+            <div class="signatures">
+                <span>Υπάλληλος: ____________________</span>
+                <span>Τμηματάρχης: ____________________</span>
+                <span>Προϊστάμενος: ____________________</span>
+            </div>
         </div>
         <table id="leaveTable">
             <thead>
@@ -73,7 +78,6 @@
         <button onclick="printLeaves()">Εκτύπωση Αδειών</button>
     </div>
 
-    <!-- Φόρτωση του Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script>
         const supabaseUrl = "https://nsrksmlqruogmckxpqer.supabase.co";
@@ -262,7 +266,7 @@
                 <td><input type="radio" name="leave${rowIndex}" value="other" onchange="updateLeave(${rowIndex})"></td>
                 <td class="leave-actions">
                     <button onclick="saveLeave(${rowIndex})">Save</button>
-                    <button onclick="deleteLeave(${rowIndex})" disabled>Delete</button>
+                    <button onclick="deleteLeave(${rowIndex})">Delete</button>
                 </td>
             `;
             tbody.appendChild(row);
@@ -350,8 +354,7 @@
                 leaves[index].saved = true;
                 leaves[index].type = Object.keys(leaveData).find(key => leaveData[key] === true && key !== "saved");
             }
-            const row = document.getElementById("leaveTableBody").rows[index];
-            row.cells[12].querySelector("button:nth-child(2)").disabled = false;
+            renderLeaveTable();
             await updateTotals();
         }
 
@@ -383,9 +386,9 @@
             leaves.forEach(leave => {
                 if (leave.saved && leave.regular) regularDays += leave.days;
             });
-            const entitled_2025 = selectedEmployee.entitled_2025; // Διατηρούμε το αρχικό δικαίωμα
-            const total_2025 = entitled_2025 + previous; // Προσθέτουμε τα υπόλοιπα προηγούμενου έτους
-            const remaining = total_2025 - regularDays; // Αφαιρούμε τις κανονικές άδειες
+            const entitled_2025 = selectedEmployee.entitled_2025;
+            const total_2025 = entitled_2025 + previous;
+            const remaining = total_2025 - regularDays;
 
             document.getElementById("entitled").textContent = entitled_2025;
             document.getElementById("total").textContent = total_2025;
@@ -428,7 +431,7 @@
                     <td><input type="radio" name="leave${index}" value="other" ${leave.other ? "checked" : ""} onchange="updateLeave(${index})"></td>
                     <td class="leave-actions">
                         <button onclick="saveLeave(${index})">Save</button>
-                        <button onclick="deleteLeave(${index})" ${leave.saved ? "" : "disabled"}>Delete</button>
+                        <button onclick="deleteLeave(${index})">Delete</button>
                     </td>
                 `;
                 tbody.appendChild(row);
