@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Διαχείριση Αδειών Εργαζομένων</title>
+    <!-- Προσθήκη Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         * {
             margin: 0;
@@ -368,6 +370,17 @@
             margin-top: 2px;
         }
 
+        /* Flatpickr στυλ για τις αργίες */
+        .flatpickr-day.holiday {
+            background: #ff3333;
+            color: white;
+            border-radius: 50%;
+        }
+
+        .flatpickr-day.holiday:hover {
+            background: #e60000;
+        }
+
         @media print {
             body {
                 visibility: hidden;
@@ -516,6 +529,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <!-- Προσθήκη Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         const supabaseUrl = "https://nsrksmlqruogmckxpqer.supabase.co";
         const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zcmtzbWxxcnVvZ21ja3hwcWVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NjYwNjQsImV4cCI6MjA1NzM0MjA2NH0.NydawPjtyBG83qH79uY6rWqCFZleJ6zfo-ZgkRw5QoY";
@@ -528,6 +543,7 @@
         let currentYear = new Date().getFullYear();
         let selectedYear = currentYear;
         const adminEmail = "themspyr@gmail.com";
+        let greekHolidays = {};
 
         const TOTAL_BLOOD_DONATION_DAYS = 6;
         const TOTAL_SPECIAL_DAYS = 2;
@@ -890,6 +906,13 @@
             if (!years.includes(currentYearNow + 1)) years.push(currentYearNow + 1);
             years.sort((a, b) => b - a);
 
+            // Φόρτωση αργιών για όλα τα έτη που υπάρχουν
+            for (const year of years) {
+                if (!greekHolidays[year]) {
+                    greekHolidays[year] = await getGreekHolidays(year);
+                }
+            }
+
             const yearSelect = document.getElementById("yearSelect");
             yearSelect.innerHTML = "";
             years.forEach(year => {
@@ -929,8 +952,8 @@
             const row = document.createElement("tr");
             row.innerHTML = `
                 <td>${rowIndex + 1}</td>
-                <td><input type="date" onchange="calculateDays(this, ${rowIndex})"><span class="holiday-warning" id="fromHolidayWarning${rowIndex}"></span></td>
-                <td><input type="date" onchange="calculateDays(this, ${rowIndex})"><span class="holiday-warning" id="toHolidayWarning${rowIndex}"></span></td>
+                <td><input type="text" class="flatpickr" id="fromDate${rowIndex}" onchange="calculateDays(this, ${rowIndex})"><span class="holiday-warning" id="rangeHolidayWarning${rowIndex}"></span></td>
+                <td><input type="text" class="flatpickr" id="toDate${rowIndex}" onchange="calculateDays(this, ${rowIndex})"></td>
                 <td><span class="days">0</span></td>
                 <td><input type="radio" name="leave${rowIndex}" value="regular" onchange="updateLeave(${rowIndex})"></td>
                 <td><input type="radio" name="leave${rowIndex}" value="sick" onchange="updateLeave(${rowIndex})"></td>
@@ -962,6 +985,39 @@
                 reason: "",
                 saved: false
             });
+
+            // Αρχικοποίηση Flatpickr για τα πεδία
+            flatpickr(`#fromDate${rowIndex}`, {
+                dateFormat: "Y-m-d",
+                disable: [],
+                onDayCreate: function(dObj, dStr, fp, dayElem) {
+                    const date = dayElem.dateObj;
+                    const year = date.getFullYear();
+                    const dateStr = date.toISOString().split('T')[0];
+                    if (greekHolidays[year] && greekHolidays[year].includes(dateStr)) {
+                        dayElem.classList.add("holiday");
+                    }
+                },
+                onChange: function(selectedDates, dateStr, instance) {
+                    calculateDays(instance.element, rowIndex);
+                }
+            });
+
+            flatpickr(`#toDate${rowIndex}`, {
+                dateFormat: "Y-m-d",
+                disable: [],
+                onDayCreate: function(dObj, dStr, fp, dayElem) {
+                    const date = dayElem.dateObj;
+                    const year = date.getFullYear();
+                    const dateStr = date.toISOString().split('T')[0];
+                    if (greekHolidays[year] && greekHolidays[year].includes(dateStr)) {
+                        dayElem.classList.add("holiday");
+                    }
+                },
+                onChange: function(selectedDates, dateStr, instance) {
+                    calculateDays(instance.element, rowIndex);
+                }
+            });
         }
 
         async function calculateDays(input, index) {
@@ -970,8 +1026,7 @@
             const toInput = row.cells[2].querySelector("input");
             const from = fromInput.value;
             const to = toInput.value;
-            const fromWarning = document.getElementById(`fromHolidayWarning${index}`);
-            const toWarning = document.getElementById(`toHolidayWarning${index}`);
+            const rangeWarning = document.getElementById(`rangeHolidayWarning${index}`);
 
             if (from && to) {
                 const start = new Date(from);
@@ -986,16 +1041,14 @@
                     leaves[index].to_date = "";
                     row.cells[3].querySelector(".days").textContent = "0";
                     row.cells[10].querySelector(".holidays").textContent = "0";
-                    fromWarning.style.display = "none";
-                    toWarning.style.display = "none";
+                    rangeWarning.style.display = "none";
                     return;
                 }
 
                 if (end < start) {
                     alert("Η ημερομηνία ΕΩΣ πρέπει να είναι ίδια ή μεταγενέστερη από την ΑΠΟ!");
                     toInput.value = from;
-                    fromWarning.style.display = "none";
-                    toWarning.style.display = "none";
+                    rangeWarning.style.display = "none";
                     return;
                 }
 
@@ -1003,7 +1056,10 @@
 
                 // Υπολογισμός αργιών για το έτος
                 const year = start.getFullYear();
-                const holidays = await getGreekHolidays(year);
+                if (!greekHolidays[year]) {
+                    greekHolidays[year] = await getGreekHolidays(year);
+                }
+                const holidays = greekHolidays[year];
                 let holidayCount = 0;
                 let current = new Date(start);
                 while (current <= end) {
@@ -1012,13 +1068,9 @@
                     current.setDate(current.getDate() + 1);
                 }
 
-                // Ελέγχουμε αν η "ΑΠΟ" ή η "ΕΩΣ" ημερομηνία είναι αργία
-                const fromIsHoliday = holidays.includes(from);
-                const toIsHoliday = holidays.includes(to);
-                fromWarning.textContent = fromIsHoliday ? "Αργία" : "";
-                fromWarning.style.display = fromIsHoliday ? "block" : "none";
-                toWarning.textContent = toIsHoliday ? "Αργία" : "";
-                toWarning.style.display = toIsHoliday ? "block" : "none";
+                // Εμφάνιση προειδοποίησης αν υπάρχει αργία στο εύρος
+                rangeWarning.textContent = holidayCount > 0 ? "Το εύρος περιλαμβάνει αργίες" : "";
+                rangeWarning.style.display = holidayCount > 0 ? "block" : "none";
 
                 row.cells[3].querySelector(".days").textContent = days;
                 row.cells[10].querySelector(".holidays").textContent = holidayCount;
@@ -1043,8 +1095,7 @@
                     leaves[index].type = "";
                 }
             } else {
-                fromWarning.style.display = "none";
-                toWarning.style.display = "none";
+                rangeWarning.style.display = "none";
             }
         }
 
@@ -1195,18 +1246,27 @@
             const filteredLeaves = leaves.filter(leave => new Date(leave.from_date).getFullYear() === selectedYear);
             filteredLeaves.forEach(async (leave, index) => {
                 const row = document.createElement("tr");
-                const isCurrentYear = selectedYear === currentYear;
 
                 // Υπολογισμός αργιών για προειδοποίηση
                 const year = new Date(leave.from_date).getFullYear();
-                const holidays = await getGreekHolidays(year);
-                const fromIsHoliday = holidays.includes(leave.from_date);
-                const toIsHoliday = holidays.includes(leave.to_date);
+                if (!greekHolidays[year]) {
+                    greekHolidays[year] = await getGreekHolidays(year);
+                }
+                const holidays = greekHolidays[year];
+                let holidayCount = 0;
+                const start = new Date(leave.from_date);
+                const end = new Date(leave.to_date);
+                let current = new Date(start);
+                while (current <= end) {
+                    const dateStr = current.toISOString().split('T')[0];
+                    if (holidays.includes(dateStr)) holidayCount++;
+                    current.setDate(current.getDate() + 1);
+                }
 
                 row.innerHTML = `
                     <td>${index + 1}</td>
-                    <td><input type="date" value="${leave.from_date}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"><span class="holiday-warning" id="fromHolidayWarning${index}">${fromIsHoliday ? "Αργία" : ""}</span></td>
-                    <td><input type="date" value="${leave.to_date}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"><span class="holiday-warning" id="toHolidayWarning${index}">${toIsHoliday ? "Αργία" : ""}</span></td>
+                    <td><input type="text" class="flatpickr" id="fromDate${index}" value="${leave.from_date}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"><span class="holiday-warning" id="rangeHolidayWarning${index}">${holidayCount > 0 ? "Το εύρος περιλαμβάνει αργίες" : ""}</span></td>
+                    <td><input type="text" class="flatpickr" id="toDate${index}" value="${leave.to_date}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"></td>
                     <td><span class="days">${leave.days}</span></td>
                     <td><input type="radio" name="leave${index}" value="regular" ${leave.regular ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
                     <td><input type="radio" name="leave${index}" value="sick" ${leave.sick ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
@@ -1220,15 +1280,49 @@
                     <td><input type="text" class="reason-input" id="reason${index}" value="${leave.reason || ''}" placeholder="Αιτιολογία (προαιρετικό)" ${leave.saved ? 'disabled' : ''}></td>
                     <td class="leave-actions">
                         <button onclick="saveLeave(${index})" ${leave.saved ? 'disabled' : ''}>Save</button>
-                        <button onclick="deleteLeave(${index})" ${isCurrentYear ? '' : 'disabled'}>Delete</button>
+                        <button onclick="deleteLeave(${index})">Delete</button>
                     </td>
                     <td></td><td></td><td></td>
                 `;
                 tbody.appendChild(row);
 
                 // Εμφάνιση των προειδοποιήσεων αργιών
-                document.getElementById(`fromHolidayWarning${index}`).style.display = fromIsHoliday ? "block" : "none";
-                document.getElementById(`toHolidayWarning${index}`).style.display = toIsHoliday ? "block" : "none";
+                document.getElementById(`rangeHolidayWarning${index}`).style.display = holidayCount > 0 ? "block" : "none";
+
+                // Αρχικοποίηση Flatpickr
+                if (!leave.saved) {
+                    flatpickr(`#fromDate${index}`, {
+                        dateFormat: "Y-m-d",
+                        disable: [],
+                        onDayCreate: function(dObj, dStr, fp, dayElem) {
+                            const date = dayElem.dateObj;
+                            const year = date.getFullYear();
+                            const dateStr = date.toISOString().split('T')[0];
+                            if (greekHolidays[year] && greekHolidays[year].includes(dateStr)) {
+                                dayElem.classList.add("holiday");
+                            }
+                        },
+                        onChange: function(selectedDates, dateStr, instance) {
+                            calculateDays(instance.element, index);
+                        }
+                    });
+
+                    flatpickr(`#toDate${index}`, {
+                        dateFormat: "Y-m-d",
+                        disable: [],
+                        onDayCreate: function(dObj, dStr, fp, dayElem) {
+                            const date = dayElem.dateObj;
+                            const year = date.getFullYear();
+                            const dateStr = date.toISOString().split('T')[0];
+                            if (greekHolidays[year] && greekHolidays[year].includes(dateStr)) {
+                                dayElem.classList.add("holiday");
+                            }
+                        },
+                        onChange: function(selectedDates, dateStr, instance) {
+                            calculateDays(instance.element, index);
+                        }
+                    });
+                }
             });
         }
 
