@@ -395,35 +395,42 @@
         @media print {
             body {
                 visibility: hidden;
+                margin: 0;
+                padding: 0;
             }
             .print-header, .print-header *, #leaveTable, #leaveTable *, .print-report, .print-report * {
                 visibility: visible;
             }
             .print-header {
-                position: absolute;
+                position: relative;
                 top: 0;
                 left: 0;
                 width: 100%;
+                margin-bottom: 20px;
             }
             #leaveTable {
-                position: absolute;
-                top: 100px;
-                left: 0;
+                position: relative;
                 width: 100%;
+                margin-bottom: 20px;
+                page-break-inside: auto; /* Επιτρέπει τη διάσπαση του πίνακα σε πολλές σελίδες */
+            }
+            #leaveTable tr {
+                page-break-inside: avoid; /* Αποτρέπει το σπάσιμο μιας γραμμής στη μέση */
+                page-break-after: auto;
             }
             .print-report {
-                position: absolute;
-                top: 500px;
-                left: 0;
+                position: relative;
                 width: 100%;
+                page-break-before: auto; /* Επιτρέπει την αναφορά να ξεκινά σε νέα σελίδα αν χρειάζεται */
             }
             @page {
                 size: landscape;
+                margin: 10mm; /* Ρυθμίζει τα περιθώρια της σελίδας */
             }
             body {
-                transform: scale(0.8);
-                transform-origin: 0 0;
-                width: 125%;
+                visibility: visible;
+                transform: none; /* Αφαιρούμε το scaling για να χωράει φυσικά */
+                width: 100%;
             }
         }
     </style>
@@ -1038,7 +1045,7 @@
         function cancelLeaveRow(index) {
             leaves.splice(index, 1);
             renderLeaveTable();
-            generateReport(); // Ενημερώνουμε την αναφορά μετά την ακύρωση
+            generateReport();
         }
 
         async function calculateDays(input, index) {
@@ -1198,7 +1205,7 @@
             leaves[index] = { ...data[0], saved: true };
             renderLeaveTable();
             await updateTotals();
-            generateReport(); // Ενημερώνουμε την αναφορά μετά την αποθήκευση
+            generateReport();
         }
 
         async function deleteLeave(leaveId) {
@@ -1244,7 +1251,6 @@
                 if (leaveIndex !== -1) {
                     leaves.splice(leaveIndex, 1);
                 } else {
-                    // Αν η άδεια δεν ήταν ήδη στη λίστα leaves, φορτώνουμε ξανά τις άδειες
                     const { data: updatedLeaves, error: leavesError } = await supabase
                         .from("leaves")
                         .select("*")
@@ -1257,7 +1263,7 @@
                 }
                 renderLeaveTable();
                 await updateTotals();
-                generateReport(); // Ενημερώνουμε την αναφορά μετά τη διαγραφή
+                generateReport();
             } catch (err) {
                 console.error("Unexpected error during deletion:", err);
                 alert("Προέκυψε απρόσμενο σφάλμα κατά τη διαγραφή!");
