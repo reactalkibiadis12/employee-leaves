@@ -359,6 +359,14 @@
         .reason-input, .protocol-input {
             width: 100%;
             padding: 5px;
+            resize: vertical; /* Επιτρέπει κάθετη αλλαγή μεγέθους */
+            min-height: 20px; /* Ελάχιστο ύψος */
+            overflow: hidden; /* Κρύβει το scrollbar όταν δεν χρειάζεται */
+            box-sizing: border-box;
+        }
+
+        .reason-input {
+            max-length: 50; /* Όριο 50 χαρακτήρων στο CSS (indicative) */
         }
 
         .holiday-warning {
@@ -536,7 +544,7 @@
                         <th>ΑΠΟ</th>
                         <th>ΕΩΣ</th>
                         <th>ΜΕΡΕΣ</th>
-                        <th>ΑΡ. ΠΡΩΤ.</th> <!-- Νέα στήλη -->
+                        <th>ΑΡ. ΠΡΩΤ.</th>
                         <th>ΚΑΝΟΝΙΚΗ</th>
                         <th>ΑΝΑΡ/ΚΗ</th>
                         <th>ΓΟΝΙΚΗ</th>
@@ -980,6 +988,11 @@
             return holidays.map(h => h.date);
         }
 
+        function autoResizeTextarea(textarea) {
+            textarea.style.height = "auto"; // Επαναφέρει το ύψος
+            textarea.style.height = textarea.scrollHeight + "px"; // Προσαρμόζει στο περιεχόμενο
+        }
+
         function addLeaveRow() {
             if (selectedYear !== currentYear) {
                 alert("Μπορείτε να προσθέσετε άδειες μόνο για το τρέχον έτος!");
@@ -993,7 +1006,7 @@
                 <td><input type="text" class="flatpickr" id="fromDate${rowIndex}" onchange="calculateDays(this, ${rowIndex})"><span class="holiday-warning" id="rangeHolidayWarning${rowIndex}"></span></td>
                 <td><input type="text" class="flatpickr" id="toDate${rowIndex}" onchange="calculateDays(this, ${rowIndex})"></td>
                 <td><span class="days">0</span></td>
-                <td><input type="text" class="protocol-input" id="protocolNumber${rowIndex}" placeholder="Αρ. Πρωτ. (προαιρετικό)"></td>
+                <td><textarea class="protocol-input" id="protocolNumber${rowIndex}" placeholder="Αρ. Πρωτ. (προαιρετικό)" oninput="autoResizeTextarea(this)"></textarea></td>
                 <td><input type="radio" name="leave${rowIndex}" value="regular" onchange="updateLeave(${rowIndex})"></td>
                 <td><input type="radio" name="leave${rowIndex}" value="sick" onchange="updateLeave(${rowIndex})"></td>
                 <td><input type="radio" name="leave${rowIndex}" value="parental" onchange="updateLeave(${rowIndex})"><input type="number" class="parental-hours-input" id="parentalHours${rowIndex}" placeholder="Ώρες" min="0"></td>
@@ -1002,7 +1015,7 @@
                 <td><input type="radio" name="leave${rowIndex}" value="blood_donation" onchange="updateLeave(${rowIndex})"></td>
                 <td><input type="radio" name="leave${rowIndex}" value="day_off" onchange="updateLeave(${rowIndex})"></td>
                 <td><input type="radio" name="leave${rowIndex}" value="other" onchange="updateLeave(${rowIndex})"></td>
-                <td><input type="text" class="reason-input" id="reason${rowIndex}" placeholder="Αιτιολογία (προαιρετικό)"></td>
+                <td><textarea class="reason-input" id="reason${rowIndex}" maxlength="50" placeholder="Αιτιολογία (προαιρετικό, max 50)" oninput="autoResizeTextarea(this)"></textarea></td>
                 <td class="leave-actions">
                     <button class="cancel-btn" onclick="cancelLeaveRow(${rowIndex})">X</button>
                     <button onclick="saveLeave(${rowIndex})">Αποθήκευση</button>
@@ -1015,7 +1028,7 @@
                 from_date: "",
                 to_date: "",
                 days: 0,
-                protocol_number: "", // Νέο πεδίο
+                protocol_number: "",
                 type: "",
                 parental_hours: 0,
                 blood_donation_days: 0,
@@ -1061,6 +1074,10 @@
                     calculateDays(instance.element, rowIndex);
                 }
             });
+
+            // Αρχική προσαρμογή μεγέθους
+            autoResizeTextarea(document.getElementById(`protocolNumber${rowIndex}`));
+            autoResizeTextarea(document.getElementById(`reason${rowIndex}`));
         }
 
         function cancelLeaveRow(index) {
@@ -1185,9 +1202,14 @@
                 return;
             }
 
-            const protocolNumber = document.getElementById(`protocolNumber${index}`).value || null; // Νέο πεδίο
+            const protocolNumber = document.getElementById(`protocolNumber${index}`).value || null;
             const reason = document.getElementById(`reason${index}`).value || null;
             const totalParentalHours = leave.type === "parental" ? (parseInt(document.getElementById(`parentalHours${index}`).value) || 0) : 0;
+
+            if (reason && reason.length > 50) {
+                alert("Η αιτιολογία δεν μπορεί να υπερβαίνει τους 50 χαρακτήρες!");
+                return;
+            }
 
             if (leave.type === "special") {
                 const totalSpecialDaysTaken = leaves
@@ -1204,7 +1226,7 @@
                 from_date: leave.from_date,
                 to_date: leave.to_date,
                 days: leave.days,
-                protocol_number: protocolNumber, // Νέο πεδίο
+                protocol_number: protocolNumber,
                 regular: leave.type === "regular",
                 sick: leave.type === "sick",
                 parental: leave.type === "parental",
@@ -1372,7 +1394,7 @@
                     <td><input type="text" class="flatpickr" id="fromDate${index}" value="${leave.from_date.split('-').reverse().join('/')}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"><span class="holiday-warning" id="rangeHolidayWarning${index}">${holidayCount > 0 ? "Το εύρος περιλαμβάνει αργίες" : ""}</span></td>
                     <td><input type="text" class="flatpickr" id="toDate${index}" value="${leave.to_date.split('-').reverse().join('/')}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"></td>
                     <td><span class="days">${leave.days}</span></td>
-                    <td><input type="text" class="protocol-input" id="protocolNumber${index}" value="${leave.protocol_number || ''}" placeholder="Αρ. Πρωτ. (προαιρετικό)" ${leave.saved ? 'disabled' : ''}></td>
+                    <td><textarea class="protocol-input" id="protocolNumber${index}" placeholder="Αρ. Πρωτ. (προαιρετικό)" ${leave.saved ? 'disabled' : ''} oninput="autoResizeTextarea(this)">${leave.protocol_number || ''}</textarea></td>
                     <td><input type="radio" name="leave${index}" value="regular" ${leave.regular ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
                     <td><input type="radio" name="leave${index}" value="sick" ${leave.sick ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
                     <td><input type="radio" name="leave${index}" value="parental" ${leave.parental ? "checked" : ""} ${leave.saved ? 'disabled' : ''} ${leave.days > 1 ? 'disabled' : ''} onchange="updateLeave(${index})"><input type="number" class="parental-hours-input" id="parentalHours${index}" value="${leave.parental_hours || ''}" placeholder="Ώρες" min="0" ${leave.saved ? 'disabled' : ''} style="display: ${leave.parental ? 'inline-block' : 'none'};"></td>
@@ -1381,7 +1403,7 @@
                     <td><input type="radio" name="leave${index}" value="blood_donation" ${leave.blood_donation ? "checked" : ""} ${leave.saved ? 'disabled' : ''} ${leave.days !== 2 ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
                     <td><input type="radio" name="leave${index}" value="day_off" ${leave.day_off ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
                     <td><input type="radio" name="leave${index}" value="other" ${leave.other ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
-                    <td><input type="text" class="reason-input" id="reason${index}" value="${leave.reason || ''}" placeholder="Αιτιολογία (προαιρετικό)" ${leave.saved ? 'disabled' : ''}></td>
+                    <td><textarea class="reason-input" id="reason${index}" maxlength="50" placeholder="Αιτιολογία (προαιρετικό, max 50)" ${leave.saved ? 'disabled' : ''} oninput="autoResizeTextarea(this)">${leave.reason || ''}</textarea></td>
                     <td class="leave-actions">
                         ${!leave.saved ? `<button class="cancel-btn" onclick="cancelLeaveRow(${index})">X</button><button onclick="saveLeave(${index})">Αποθήκευση</button>` : `<button onclick="deleteLeave('${leave.id}')">Διαγραφή</button>`}
                     </td>
@@ -1392,6 +1414,10 @@
                 tbody.appendChild(row);
 
                 document.getElementById(`rangeHolidayWarning${index}`).style.display = holidayCount > 0 ? "block" : "none";
+
+                // Αρχική προσαρμογή μεγέθους για τα textareas
+                autoResizeTextarea(document.getElementById(`protocolNumber${index}`));
+                autoResizeTextarea(document.getElementById(`reason${index}`));
 
                 if (!leave.saved) {
                     flatpickr(`#fromDate${index}`, {
