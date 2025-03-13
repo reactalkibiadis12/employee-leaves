@@ -139,6 +139,18 @@
             box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
         }
 
+        .year-selector {
+            margin-bottom: 15px;
+        }
+
+        .year-selector select {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
         .employee-actions {
             display: none;
             gap: 10px;
@@ -261,7 +273,7 @@
         }
 
         .leave-actions button:first-child:hover {
-            background-color: #27 |ae60;
+            background-color: #27ae60;
         }
 
         .leave-actions button:last-child {
@@ -438,6 +450,12 @@
                 <label>Σύνολο Υ.Δ: <span id="totalSpecialDays"></span></label>
                 <label>Υπόλοιπα Υ.Δ: <span id="remainingSpecialDays"></span></label>
             </div>
+            <div class="year-selector">
+                <label>Επιλογή Έτους: </label>
+                <select id="yearSelect" onchange="updateLeaveTableForYear(this.value)">
+                    <!-- Θα γεμίσει δυναμικά -->
+                </select>
+            </div>
             <div class="print-header">
                 <h3 id="printEmployeeDetails"></h3>
             </div>
@@ -477,12 +495,14 @@
         let leaves = [];
         let editingEmployee = null;
         let allEmployees = [];
-        const currentYear = new Date().getFullYear();
+        let currentYear = new Date().getFullYear();
+        let selectedYear = currentYear;
         const adminEmail = "themspyr@gmail.com"; // Αντικατέστησε με το email του διαχειριστή
 
         // Σταθερές για υπολογισμούς
         const TOTAL_BLOOD_DONATION_DAYS = 6;
         const TOTAL_SPECIAL_DAYS = 2;
+        const DEFAULT_ENTITLED_DAYS = 25;
 
         // Έλεγχος συνδεσιμότητας κατά το φόρτωμα της σελίδας
         async function checkAuth() {
@@ -492,6 +512,7 @@
                 if (user.email === adminEmail) {
                     document.getElementById("loginContainer").style.display = "none";
                     document.getElementById("mainContainer").style.display = "block";
+                    await checkAndUpdateYear();
                     loadEmployees();
                 } else {
                     alert("Μόνο ο διαχειριστής μπορεί να έχει πρόσβαση!");
@@ -500,6 +521,66 @@
             } else {
                 document.getElementById("loginContainer").style.display = "block";
                 document.getElementById("mainContainer").style.display = "none";
+            }
+        }
+
+        // Λειτουργία για έλεγχο και ενημέρωση έτους
+        async function checkAndUpdateYear() {
+            const storedYear = localStorage.getItem("lastCheckedYear");
+            const newYear = new Date().getFullYear();
+
+            if (storedYear && parseInt(storedYear) !== newYear) {
+                // Το έτος έχει αλλάξει, ενημέρωση των υπολοίπων
+                const { data: employees, error: empError } = await supabase.from("employees").select("*");
+                if (empError) {
+                    console.error("Error fetching employees for year update:", empError);
+                    return;
+                }
+
+                for (const emp of employees) {
+                    // Υπολογισμός των δεικτών για το προηγούμενο έτος
+                    const { data: prevLeaves, error: leavesError } = await supabase
+                        .from("leaves")
+                        .select("*")
+                        .eq("employee_id", emp.id);
+                    if (leavesError) {
+                        console.error("Error fetching leaves for employee:", leavesError);
+                        continue;
+                    }
+
+                    let regularDays = 0;
+                    leaves.forEach(leave => {
+                        const leaveYear = new Date(leave.from_date).getFullYear();
+                        if (leave.saved && leaveYear === parseInt(storedYear) && leave.regular) {
+                            regularDays += leave.days;
+                        }
+                    });
+
+                    const newPrevious = emp.remaining; // Αντιγραφή του remaining στο previous
+                    const newTotal = DEFAULT_ENTITLED_DAYS + newPrevious;
+                    const newRemaining = newTotal; // Reset του remaining στο total
+
+                    // Ενημέρωση του εργαζομένου στη βάση
+                    const { error: updateError } = await supabase
+                        .from("employees")
+                        .update({
+                            previous: newPrevious,
+                            entitled: DEFAULT_ENTITLED_DAYS,
+                            total: newTotal,
+                            remaining: newRemaining
+                        })
+                        .eq("id", emp.id);
+
+                    if (updateError) {
+                        console.error(`Error updating employee ${emp.id}:`, updateError);
+                    }
+                }
+
+                localStorage.setItem("lastCheckedYear", newYear.toString());
+                currentYear = newYear;
+                selectedYear = newYear;
+            } else if (!storedYear) {
+                localStorage.setItem("lastCheckedYear", currentYear.toString());
             }
         }
 
@@ -535,6 +616,7 @@
 
             document.getElementById("loginContainer").style.display = "none";
             document.getElementById("mainContainer").style.display = "block";
+            await checkAndUpdateYear();
             loadEmployees();
         }
 
@@ -625,9 +707,9 @@
                     afm,
                     email,
                     previous: 0,
-                    entitled_2025: 25,
-                    total_2025: 25,
-                    remaining: 25,
+                    entitled: DEFAULT_ENTITLED_DAYS,
+                    total: DEFAULT_ENTITLED_DAYS,
+                    remaining: DEFAULT_ENTITLED_DAYS,
                     number_of_children: numberOfChildren,
                     different_educational_levels: differentLevels
                 });
@@ -781,8 +863,8 @@
             document.getElementById("employeeName").textContent = `${data.surname} ${data.name}`;
             document.getElementById("printEmployeeDetails").textContent = `Εργαζόμενος: ${data.surname} ${data.name} | ΑΦΜ: ${data.afm} | Email: ${data.email}`;
             document.getElementById("previous").value = data.previous || 0;
-            document.getElementById("entitled").textContent = data.entitled_2025;
-            document.getElementById("total").textContent = data.total_2025;
+            document.getElementById("entitled").textContent = data.entitled;
+            document.getElementById("total").textContent = data.total;
             document.getElementById("remaining").textContent = data.remaining;
             document.getElementById("currentYearEntitled").textContent = currentYear;
             document.getElementById("currentYearTotal").textContent = currentYear;
@@ -793,6 +875,7 @@
             document.getElementById("totalBloodDonationDays").textContent = TOTAL_BLOOD_DONATION_DAYS;
             document.getElementById("totalSpecialDays").textContent = TOTAL_SPECIAL_DAYS;
 
+            // Φόρτωση όλων των αδειών για τον εργαζόμενο
             const { data: leavesData, error: leavesError } = await supabase
                 .from("leaves")
                 .select("*")
@@ -802,13 +885,42 @@
                 return;
             }
             leaves = leavesData.map(leave => ({ ...leave, saved: true }));
-            renderLeaveTable();
+
+            // Δημιουργία του dropdown για τα έτη
+            const years = [...new Set(leaves.map(leave => new Date(leave.from_date).getFullYear()))];
+            years.sort((a, b) => b - a);
+            const yearSelect = document.getElementById("yearSelect");
+            yearSelect.innerHTML = "";
+            years.forEach(year => {
+                const option = document.createElement("option");
+                option.value = year;
+                option.textContent = year;
+                if (year === currentYear) option.selected = true;
+                yearSelect.appendChild(option);
+            });
+
+            // Εμφάνιση των αδειών για το τρέχον έτος
+            selectedYear = currentYear;
+            updateLeaveTableForYear(selectedYear);
             updateTotals();
         }
 
+        function updateLeaveTableForYear(year) {
+            selectedYear = parseInt(year);
+            renderLeaveTable();
+            updateTotals();
+            // Ενεργοποίηση/απενεργοποίηση του κουμπιού "Προσθήκη Άδειας" με βάση το έτος
+            const addLeaveButton = document.querySelector(".add-leave");
+            addLeaveButton.disabled = selectedYear !== currentYear;
+        }
+
         function addLeaveRow() {
+            if (selectedYear !== currentYear) {
+                alert("Μπορείτε να προσθέσετε άδειες μόνο για το τρέχον έτος!");
+                return;
+            }
             const tbody = document.getElementById("leaveTableBody");
-            const rowIndex = leaves.length;
+            const rowIndex = leaves.filter(leave => new Date(leave.from_date).getFullYear() === selectedYear).length;
             const row = document.createElement("tr");
             row.innerHTML = `
                 <td>${rowIndex + 1}</td>
@@ -985,7 +1097,8 @@
             let totalSpecialDaysTaken = 0;
 
             leaves.forEach(leave => {
-                if (leave.saved) {
+                const leaveYear = new Date(leave.from_date).getFullYear();
+                if (leave.saved && leaveYear === currentYear) {
                     if (leave.regular) regularDays += leave.days;
                     if (leave.parental) totalParentalHoursTaken += leave.parental_hours || 0;
                     if (leave.blood_donation) totalBloodDonationDaysTaken += leave.blood_donation_days || 0;
@@ -993,16 +1106,16 @@
                 }
             });
 
-            const entitled_2025 = selectedEmployee.entitled_2025;
-            const total_2025 = entitled_2025 + previous;
-            const remaining = total_2025 - regularDays;
+            const entitled = selectedEmployee.entitled;
+            const total = entitled + previous;
+            const remaining = total - regularDays;
             const totalParentalHours = calculateTotalParentalHours(selectedEmployee);
             const remainingParentalHours = totalParentalHours - totalParentalHoursTaken;
             const remainingBloodDonationDays = TOTAL_BLOOD_DONATION_DAYS - totalBloodDonationDaysTaken;
             const remainingSpecialDays = TOTAL_SPECIAL_DAYS - totalSpecialDaysTaken;
 
-            document.getElementById("entitled").textContent = entitled_2025;
-            document.getElementById("total").textContent = total_2025;
+            document.getElementById("entitled").textContent = entitled;
+            document.getElementById("total").textContent = total;
             document.getElementById("remaining").textContent = remaining;
             document.getElementById("totalParentalHours").textContent = totalParentalHours;
             document.getElementById("remainingParentalHours").textContent = remainingParentalHours;
@@ -1015,7 +1128,7 @@
                 .from("employees")
                 .update({
                     previous: previous,
-                    total_2025: total_2025,
+                    total: total,
                     remaining: remaining
                 })
                 .eq("id", selectedEmployee.id);
@@ -1023,7 +1136,7 @@
                 console.error("Error updating employee totals:", error);
             } else {
                 selectedEmployee.previous = previous;
-                selectedEmployee.total_2025 = total_2025;
+                selectedEmployee.total = total;
                 selectedEmployee.remaining = remaining;
             }
         }
@@ -1031,8 +1144,10 @@
         function renderLeaveTable() {
             const tbody = document.getElementById("leaveTableBody");
             tbody.innerHTML = "";
-            leaves.forEach((leave, index) => {
+            const filteredLeaves = leaves.filter(leave => new Date(leave.from_date).getFullYear() === selectedYear);
+            filteredLeaves.forEach((leave, index) => {
                 const row = document.createElement("tr");
+                const isCurrentYear = selectedYear === currentYear;
                 row.innerHTML = `
                     <td>${index + 1}</td>
                     <td><input type="date" value="${leave.from_date}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"></td>
@@ -1049,7 +1164,7 @@
                     <td><input type="text" class="reason-input" id="reason${index}" value="${leave.reason || ''}" placeholder="Αιτιολογία (προαιρετικό)" ${leave.saved ? 'disabled' : ''}></td>
                     <td class="leave-actions">
                         <button onclick="saveLeave(${index})" ${leave.saved ? 'disabled' : ''}>Save</button>
-                        <button onclick="deleteLeave(${index})">Delete</button>
+                        <button onclick="deleteLeave(${index})" ${isCurrentYear ? '' : 'disabled'}>Delete</button>
                     </td>
                     <td></td><td></td><td></td>
                 `;
@@ -1064,7 +1179,8 @@
         function generateReport() {
             let totalDays = 0, regularDays = 0, sickDays = 0, parentalDays = 0, parentalHours = 0, educationalDays = 0, specialDays = 0, bloodDonationDays = 0, dayOffDays = 0, otherDays = 0;
 
-            leaves.forEach(leave => {
+            const filteredLeaves = leaves.filter(leave => new Date(leave.from_date).getFullYear() === selectedYear);
+            filteredLeaves.forEach(leave => {
                 if (leave.saved) {
                     totalDays += leave.days;
                     if (leave.regular) regularDays += leave.days;
@@ -1081,7 +1197,7 @@
                 }
             });
 
-            document.getElementById("reportYear").textContent = currentYear;
+            document.getElementById("reportYear").textContent = selectedYear;
             document.getElementById("totalLeaveDays").textContent = totalDays;
             document.getElementById("regularDays").textContent = regularDays;
             document.getElementById("sickDays").textContent = sickDays;
