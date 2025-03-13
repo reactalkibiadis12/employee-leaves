@@ -398,38 +398,44 @@
                 margin: 0;
                 padding: 0;
             }
-            .print-header, .print-header *, #leaveTable, #leaveTable *, .print-report, .print-report * {
+            #employeeDetails, #employeeDetails * {
                 visibility: visible;
             }
-            .print-header {
+            h1, .dropdown, #addEmployeeForm, .employee-search, .employee-dropdown, .edit-form, .logout-btn {
+                display: none !important; /* Αποκρύπτουμε αυτά τα στοιχεία στην εκτύπωση */
+            }
+            #employeeDetails {
                 position: relative;
-                top: 0;
-                left: 0;
-                width: 100%;
-                margin-bottom: 20px;
+                padding: 0;
+                box-shadow: none;
+            }
+            #employeeName {
+                margin-top: 0;
             }
             #leaveTable {
                 position: relative;
                 width: 100%;
                 margin-bottom: 20px;
-                page-break-inside: auto; /* Επιτρέπει τη διάσπαση του πίνακα σε πολλές σελίδες */
+                page-break-inside: auto;
             }
             #leaveTable tr {
-                page-break-inside: avoid; /* Αποτρέπει το σπάσιμο μιας γραμμής στη μέση */
+                page-break-inside: avoid;
                 page-break-after: auto;
             }
-            .print-report {
+            .report {
                 position: relative;
                 width: 100%;
-                page-break-before: auto; /* Επιτρέπει την αναφορά να ξεκινά σε νέα σελίδα αν χρειάζεται */
+                page-break-before: auto;
+            }
+            .modern-button {
+                display: none; /* Αποκρύπτουμε τα κουμπιά στην εκτύπωση */
             }
             @page {
                 size: landscape;
-                margin: 10mm; /* Ρυθμίζει τα περιθώρια της σελίδας */
+                margin: 10mm;
             }
             body {
                 visibility: visible;
-                transform: none; /* Αφαιρούμε το scaling για να χωράει φυσικά */
                 width: 100%;
             }
         }
@@ -522,9 +528,6 @@
                 <select id="yearSelect" onchange="updateLeaveTableForYear(this.value)">
                     <!-- Θα γεμίσει δυναμικά -->
                 </select>
-            </div>
-            <div class="print-header">
-                <h3 id="printEmployeeDetails"></h3>
             </div>
             <table id="leaveTable">
                 <thead>
@@ -848,7 +851,7 @@
                 document.getElementById("employeeDropdown").style.display = "flex";
                 if (selectedEmployee && selectedEmployee.id === editingEmployee.id) {
                     selectedEmployee = { ...selectedEmployee, surname, name, afm, email, number_of_children: numberOfChildren, different_educational_levels: differentLevels };
-                    document.getElementById("employeeName").textContent = `${surname} ${name}`;
+                    document.getElementById("employeeName").textContent = `${surname} ${name} | ${afm} | ${email}`;
                     document.getElementById("employeeSelect").value = editingEmployee.id;
                     updateTotals();
                 }
@@ -894,8 +897,7 @@
             selectedEmployee = data;
             document.getElementById("employeeDetails").style.display = "block";
             actions.style.display = "flex";
-            document.getElementById("employeeName").textContent = `${data.surname} ${data.name}`;
-            document.getElementById("printEmployeeDetails").textContent = `Εργαζόμενος: ${data.surname} ${data.name} | ΑΦΜ: ${data.afm} | Email: ${data.email}`;
+            document.getElementById("employeeName").textContent = `${data.surname} ${data.name} | ${data.afm} | ${data.email}`;
             document.getElementById("previous").value = data.previous || 0;
             document.getElementById("entitled").textContent = data.entitled;
             document.getElementById("total").textContent = data.total;
@@ -1415,9 +1417,8 @@
             generateReport();
             const report = document.getElementById("leaveReport");
             report.style.display = "block";
-            report.classList.add("print-report");
             window.print();
-            report.classList.remove("print-report");
+            report.style.display = "none"; // Επαναφέρουμε την κατάσταση μετά την εκτύπωση
         }
 
         function generateReport() {
