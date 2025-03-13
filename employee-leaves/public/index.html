@@ -192,6 +192,16 @@
             outline: none;
         }
 
+        .form-container .children-section, .edit-form .children-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #differentLevels, #editDifferentLevels {
+            display: none;
+        }
+
         .details {
             display: none;
             padding: 20px;
@@ -280,6 +290,57 @@
             margin: 5px 0;
         }
 
+        .modern-button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin: 5px;
+        }
+
+        .modern-button.add-leave {
+            background: linear-gradient(45deg, #ff6f61, #ff9f80);
+        }
+
+        .modern-button.add-leave:hover {
+            background: linear-gradient(45deg, #ff9f80, #ff6f61);
+            transform: translateY(-2px);
+        }
+
+        .modern-button.print-leaves {
+            background: linear-gradient(45deg, #40c4ff, #0288d1);
+        }
+
+        .modern-button.print-leaves:hover {
+            background: linear-gradient(45deg, #0288d1, #40c4ff);
+            transform: translateY(-2px);
+        }
+
+        .modern-button.generate-report {
+            background: linear-gradient(45deg, #66bb6a, #388e3c);
+        }
+
+        .modern-button.generate-report:hover {
+            background: linear-gradient(45deg, #388e3c, #66bb6a);
+            transform: translateY(-2px);
+        }
+
+        .parental-hours-input {
+            display: none;
+            width: 60px;
+            padding: 5px;
+            margin-left: 5px;
+        }
+
+        .reason-input {
+            width: 100%;
+            padding: 5px;
+        }
+
         @media print {
             body * { visibility: hidden; }
             .print-header, .print-header *, #leaveTable, #leaveTable * { visibility: visible; }
@@ -309,6 +370,10 @@
             <input type="text" id="name" placeholder="Όνομα"><br>
             <input type="text" id="afm" placeholder="ΑΦΜ"><br>
             <input type="email" id="email" placeholder="Email"><br>
+            <div class="children-section">
+                <input type="number" id="numberOfChildren" placeholder="Αριθμός Παιδιών" min="0" oninput="toggleDifferentLevels()">
+                <label><input type="checkbox" id="differentLevels"> Διαφορετικές Εκπαιδευτικές Βαθμίδες</label>
+            </div>
             <button onclick="addEmployee()">Προσθήκη</button>
         </div>
 
@@ -332,6 +397,10 @@
             <input type="text" id="editName" placeholder="Όνομα"><br>
             <input type="text" id="editAfm" placeholder="ΑΦΜ"><br>
             <input type="email" id="editEmail" placeholder="Email"><br>
+            <div class="children-section">
+                <input type="number" id="editNumberOfChildren" placeholder="Αριθμός Παιδιών" min="0" oninput="toggleEditDifferentLevels()">
+                <label><input type="checkbox" id="editDifferentLevels"> Διαφορετικές Εκπαιδευτικές Βαθμίδες</label>
+            </div>
             <button onclick="saveEdit()">Αποθήκευση</button>
             <button onclick="cancelEdit()">Ακύρωση</button>
         </div>
@@ -343,6 +412,12 @@
                 <label>Υπόλοιπα προηγούμενου έτους: <input type="number" id="previous" min="0" onchange="updateTotals()"></label>
                 <label>Σύνολα <span id="currentYearTotal"></span>: <span id="total"></span></label>
                 <label>Υπόλοιπα: <span id="remaining"></span></label>
+                <label>Συνολικές ώρες γονικής άδειας: <span id="totalParentalHours"></span></label>
+                <label>Υπόλοιπες ώρες γονικής άδειας: <span id="remainingParentalHours"></span></label>
+                <label>Σύνολο Αιμοδοσίας: <span id="totalBloodDonationDays"></span></label>
+                <label>Υπόλοιπα Αιμοδοσίας: <span id="remainingBloodDonationDays"></span></label>
+                <label>Σύνολο Υ.Δ: <span id="totalSpecialDays"></span></label>
+                <label>Υπόλοιπα Υ.Δ: <span id="remainingSpecialDays"></span></label>
             </div>
             <div class="print-header">
                 <h3 id="printEmployeeDetails"></h3>
@@ -350,20 +425,20 @@
             <table id="leaveTable">
                 <thead>
                     <tr>
-                        <th>Α/Α</th><th>ΑΠΟ</th><th>ΕΩΣ</th><th>ΜΕΡΕΣ</th><th>ΚΑΝΟΝΙΚΗ</th><th>ΑΝΑΡ/ΚΗ</th><th>ΓΟΝΙΚΗ</th><th>ΕΚΠ/ΚΗ</th><th>Υ.Δ</th><th>ΑΙΜΟΔΟΣΙΑ</th><th>ΡΕΠΟ</th><th>ΑΛΛΗ</th><th>ΕΝΕΡΓΕΙΕΣ</th><th>ΥΠΑΛΛΗΛΟΣ</th><th>ΤΜΗΜΑΤΑΡΧΗΣ</th><th>ΠΡΟΪΣΤΑΜΕΝΟΣ</th>
+                        <th>Α/Α</th><th>ΑΠΟ</th><th>ΕΩΣ</th><th>ΜΕΡΕΣ</th><th>ΚΑΝΟΝΙΚΗ</th><th>ΑΝΑΡ/ΚΗ</th><th>ΓΟΝΙΚΗ</th><th>ΕΚΠ/ΚΗ</th><th>Υ.Δ</th><th>ΑΙΜΟΔΟΣΙΑ</th><th>ΡΕΠΟ</th><th>ΑΛΛΗ</th><th>ΑΙΤΙΟΛΟΓΙΑ</th><th>ΕΝΕΡΓΕΙΕΣ</th><th>ΥΠΑΛΛΗΛΟΣ</th><th>ΤΜΗΜΑΤΑΡΧΗΣ</th><th>ΠΡΟΪΣΤΑΜΕΝΟΣ</th>
                     </tr>
                 </thead>
                 <tbody id="leaveTableBody"></tbody>
             </table>
-            <button onclick="addLeaveRow()">Προσθήκη Άδειας</button>
-            <button onclick="printLeaves()">Εκτύπωση Αδειών</button>
-            <button onclick="generateReport()">Δημιουργία Αναφοράς</button>
+            <button class="modern-button add-leave" onclick="addLeaveRow()">Προσθήκη Άδειας</button>
+            <button class="modern-button print-leaves" onclick="printLeaves()">Εκτύπωση Αδειών</button>
+            <button class="modern-button generate-report" onclick="generateReport()">Δημιουργία Αναφοράς</button>
             <div class="report" id="leaveReport" style="display: none;">
                 <h3>Αναφορά Αδειών <span id="reportYear"></span></h3>
                 <p>Σύνολο Ημερών Αδειών: <span id="totalLeaveDays"></span></p>
                 <p>Κανονική: <span id="regularDays"></span></p>
                 <p>Αναρρωτική: <span id="sickDays"></span></p>
-                <p>Γονική: <span id="parentalDays"></span></p>
+                <p>Γονική: <span id="parentalDays"></span> (Ώρες: <span id="parentalHours"></span>)</p>
                 <p>Εκπαιδευτική: <span id="educationalDays"></span></p>
                 <p>Υ.Δ: <span id="specialDays"></span></p>
                 <p>Αιμοδοσία: <span id="bloodDonationDays"></span></p>
@@ -382,9 +457,13 @@
         let selectedEmployee = null;
         let leaves = [];
         let editingEmployee = null;
-        let allEmployees = []; // Μεταβλητή για αποθήκευση όλων των εργαζομένων
+        let allEmployees = [];
         const currentYear = new Date().getFullYear();
-        const adminEmail = "themspyr@gmail.com"; // Αντικατέστησε με το email του διαχειριστή
+        const adminEmail = "admin@example.com"; // Αντικατέστησε με το email του διαχειριστή
+
+        // Σταθερές για υπολογισμούς
+        const TOTAL_BLOOD_DONATION_DAYS = 6;
+        const TOTAL_SPECIAL_DAYS = 2;
 
         // Έλεγχος συνδεσιμότητας κατά το φόρτωμα της σελίδας
         async function checkAuth() {
@@ -464,13 +543,27 @@
             form.style.display = form.style.display === "block" ? "none" : "block";
         }
 
+        function toggleDifferentLevels() {
+            const numChildren = parseInt(document.getElementById("numberOfChildren").value) || 0;
+            const differentLevels = document.getElementById("differentLevels");
+            differentLevels.parentElement.style.display = numChildren > 1 ? "block" : "none";
+            if (numChildren <= 1) differentLevels.checked = false;
+        }
+
+        function toggleEditDifferentLevels() {
+            const numChildren = parseInt(document.getElementById("editNumberOfChildren").value) || 0;
+            const differentLevels = document.getElementById("editDifferentLevels");
+            differentLevels.parentElement.style.display = numChildren > 1 ? "block" : "none";
+            if (numChildren <= 1) differentLevels.checked = false;
+        }
+
         async function loadEmployees() {
             const { data, error } = await supabase.from("employees").select("*");
             if (error) {
                 console.error("Error loading employees:", error);
                 return;
             }
-            allEmployees = data; // Αποθήκευση όλων των εργαζομένων
+            allEmployees = data;
             renderEmployees(data);
         }
 
@@ -487,8 +580,8 @@
 
         function filterEmployees() {
             const searchTerm = document.getElementById("employeeSearch").value.toLowerCase();
-            const filteredEmployees = allEmployees.filter(emp => 
-                emp.surname.toLowerCase().includes(searchTerm) || 
+            const filteredEmployees = allEmployees.filter(emp =>
+                emp.surname.toLowerCase().includes(searchTerm) ||
                 emp.name.toLowerCase().includes(searchTerm)
             );
             renderEmployees(filteredEmployees);
@@ -499,9 +592,21 @@
             const name = document.getElementById("name").value;
             const afm = document.getElementById("afm").value;
             const email = document.getElementById("email").value;
+            const numberOfChildren = parseInt(document.getElementById("numberOfChildren").value) || 0;
+            const differentLevels = document.getElementById("differentLevels").checked && numberOfChildren > 1;
+
             if (surname && name && afm && email) {
                 const { error } = await supabase.from("employees").insert({
-                    surname, name, afm, email, previous: 0, entitled_2025: 25, total_2025: 25, remaining: 25
+                    surname,
+                    name,
+                    afm,
+                    email,
+                    previous: 0,
+                    entitled_2025: 25,
+                    total_2025: 25,
+                    remaining: 25,
+                    number_of_children: numberOfChildren,
+                    different_educational_levels: differentLevels
                 });
                 if (error) {
                     console.error("Error adding employee:", error);
@@ -512,6 +617,9 @@
                 document.getElementById("name").value = "";
                 document.getElementById("afm").value = "";
                 document.getElementById("email").value = "";
+                document.getElementById("numberOfChildren").value = "";
+                document.getElementById("differentLevels").checked = false;
+                toggleDifferentLevels();
                 toggleForm();
             } else {
                 alert("Συμπληρώστε όλα τα πεδία!");
@@ -565,6 +673,9 @@
             document.getElementById("editName").value = data.name;
             document.getElementById("editAfm").value = data.afm;
             document.getElementById("editEmail").value = data.email;
+            document.getElementById("editNumberOfChildren").value = data.number_of_children || 0;
+            document.getElementById("editDifferentLevels").checked = data.different_educational_levels;
+            toggleEditDifferentLevels();
             document.getElementById("editForm").style.display = "block";
             document.getElementById("employeeDropdown").style.display = "none";
         }
@@ -574,10 +685,20 @@
             const name = document.getElementById("editName").value;
             const afm = document.getElementById("editAfm").value;
             const email = document.getElementById("editEmail").value;
+            const numberOfChildren = parseInt(document.getElementById("editNumberOfChildren").value) || 0;
+            const differentLevels = document.getElementById("editDifferentLevels").checked && numberOfChildren > 1;
+
             if (surname && name && afm && email) {
                 const { error } = await supabase
                     .from("employees")
-                    .update({ surname, name, afm, email })
+                    .update({
+                        surname,
+                        name,
+                        afm,
+                        email,
+                        number_of_children: numberOfChildren,
+                        different_educational_levels: differentLevels
+                    })
                     .eq("id", editingEmployee.id);
                 if (error) {
                     console.error("Error updating employee:", error);
@@ -587,9 +708,10 @@
                 document.getElementById("editForm").style.display = "none";
                 document.getElementById("employeeDropdown").style.display = "flex";
                 if (selectedEmployee && selectedEmployee.id === editingEmployee.id) {
-                    selectedEmployee = { ...selectedEmployee, surname, name, afm, email };
+                    selectedEmployee = { ...selectedEmployee, surname, name, afm, email, number_of_children: numberOfChildren, different_educational_levels: differentLevels };
                     document.getElementById("employeeName").textContent = `${surname} ${name}`;
                     document.getElementById("employeeSelect").value = editingEmployee.id;
+                    updateTotals(); // Ενημέρωση δεικτών λόγω αλλαγής παιδιών
                 }
                 editingEmployee = null;
             } else {
@@ -601,6 +723,16 @@
             document.getElementById("editForm").style.display = "none";
             document.getElementById("employeeDropdown").style.display = "flex";
             editingEmployee = null;
+        }
+
+        function calculateTotalParentalHours(employee) {
+            const numChildren = employee.number_of_children || 0;
+            const differentLevels = employee.different_educational_levels || false;
+
+            if (numChildren === 1) return 32;
+            if (numChildren >= 2 && !differentLevels) return 40;
+            if (numChildren >= 2 && differentLevels) return 48;
+            return 0;
         }
 
         async function showDetails(id) {
@@ -631,6 +763,13 @@
             document.getElementById("remaining").textContent = data.remaining;
             document.getElementById("currentYearEntitled").textContent = currentYear;
             document.getElementById("currentYearTotal").textContent = currentYear;
+
+            // Υπολογισμός και εμφάνιση δεικτών
+            const totalParentalHours = calculateTotalParentalHours(data);
+            document.getElementById("totalParentalHours").textContent = totalParentalHours;
+            document.getElementById("totalBloodDonationDays").textContent = TOTAL_BLOOD_DONATION_DAYS;
+            document.getElementById("totalSpecialDays").textContent = TOTAL_SPECIAL_DAYS;
+
             const { data: leavesData, error: leavesError } = await supabase
                 .from("leaves")
                 .select("*")
@@ -641,6 +780,7 @@
             }
             leaves = leavesData.map(leave => ({ ...leave, saved: true }));
             renderLeaveTable();
+            updateTotals();
         }
 
         function addLeaveRow() {
@@ -654,12 +794,13 @@
                 <td><span class="days">0</span></td>
                 <td><input type="radio" name="leave${rowIndex}" value="regular" onchange="updateLeave(${rowIndex})"></td>
                 <td><input type="radio" name="leave${rowIndex}" value="sick" onchange="updateLeave(${rowIndex})"></td>
-                <td><input type="radio" name="leave${rowIndex}" value="parental" onchange="updateLeave(${rowIndex})"></td>
+                <td><input type="radio" name="leave${rowIndex}" value="parental" onchange="updateLeave(${rowIndex})"><input type="number" class="parental-hours-input" id="parentalHours${rowIndex}" placeholder="Ώρες" min="0"></td>
                 <td><input type="radio" name="leave${rowIndex}" value="educational" onchange="updateLeave(${rowIndex})"></td>
                 <td><input type="radio" name="leave${rowIndex}" value="special" onchange="updateLeave(${rowIndex})"></td>
                 <td><input type="radio" name="leave${rowIndex}" value="blood_donation" onchange="updateLeave(${rowIndex})"></td>
                 <td><input type="radio" name="leave${rowIndex}" value="day_off" onchange="updateLeave(${rowIndex})"></td>
                 <td><input type="radio" name="leave${rowIndex}" value="other" onchange="updateLeave(${rowIndex})"></td>
+                <td><input type="text" class="reason-input" id="reason${rowIndex}" placeholder="Αιτιολογία (προαιρετικό)"></td>
                 <td class="leave-actions">
                     <button onclick="saveLeave(${rowIndex})">Save</button>
                     <button onclick="deleteLeave(${rowIndex})" disabled>Delete</button>
@@ -673,6 +814,10 @@
                 to_date: "",
                 days: 0,
                 type: "",
+                parental_hours: 0,
+                blood_donation_days: 0,
+                special_days: 0,
+                reason: "",
                 saved: false
             });
         }
@@ -696,13 +841,39 @@
                 leaves[index].from_date = from;
                 leaves[index].to_date = to;
                 leaves[index].days = days;
+
+                // Περιορισμοί για Γονική, Αιμοδοσία, Υ.Δ
+                const parentalInput = row.cells[6].querySelector("input[type='radio']");
+                const bloodDonationInput = row.cells[9].querySelector("input[type='radio']");
+                const specialInput = row.cells[8].querySelector("input[type='radio']");
+
+                // Γονική: Μόνο 1 ημέρα
+                parentalInput.disabled = days > 1;
+                if (days > 1 && parentalInput.checked) {
+                    parentalInput.checked = false;
+                    leaves[index].type = "";
+                }
+
+                // Αιμοδοσία: Ακριβώς 2 μέρες
+                bloodDonationInput.disabled = days !== 2;
+                if (days !== 2 && bloodDonationInput.checked) {
+                    bloodDonationInput.checked = false;
+                    leaves[index].type = "";
+                }
             }
         }
 
         function updateLeave(index) {
             const row = document.getElementById("leaveTableBody").rows[index];
             const selectedType = row.querySelector(`input[name="leave${index}"]:checked`);
+            const parentalHoursInput = row.cells[6].querySelector(".parental-hours-input");
+
             leaves[index].type = selectedType ? selectedType.value : "";
+            parentalHoursInput.style.display = leaves[index].type === "parental" ? "inline-block" : "none";
+            if (leaves[index].type !== "parental") {
+                parentalHoursInput.value = "";
+                leaves[index].parental_hours = 0;
+            }
         }
 
         async function saveLeave(index) {
@@ -715,6 +886,18 @@
                 alert("Παρακαλώ επιλέξτε έναν τύπο άδειας!");
                 return;
             }
+
+            // Έλεγχος για Υ.Δ (μέγιστο 2 μέρες τον χρόνο)
+            if (leave.type === "special") {
+                const totalSpecialDaysTaken = leaves
+                    .filter(l => l.saved && l.special && new Date(l.from_date).getFullYear() === currentYear)
+                    .reduce((sum, l) => sum + l.days, 0);
+                if (totalSpecialDaysTaken + leave.days > TOTAL_SPECIAL_DAYS) {
+                    alert(`Ο εργαζόμενος έχει ξεπεράσει το όριο των ${TOTAL_SPECIAL_DAYS} ημερών Υ.Δ για το ${currentYear}!`);
+                    return;
+                }
+            }
+
             const leaveData = {
                 employee_id: selectedEmployee.id,
                 from_date: leave.from_date,
@@ -727,8 +910,13 @@
                 special: leave.type === "special",
                 blood_donation: leave.type === "blood_donation",
                 day_off: leave.type === "day_off",
-                other: leave.type === "other"
+                other: leave.type === "other",
+                parental_hours: leave.type === "parental" ? (parseInt(document.getElementById(`parentalHours${index}`).value) || 0) : 0,
+                blood_donation_days: leave.type === "blood_donation" ? leave.days : 0,
+                special_days: leave.type === "special" ? leave.days : 0,
+                reason: document.getElementById(`reason${index}`).value || null
             };
+
             const { data, error } = await supabase
                 .from("leaves")
                 .insert(leaveData)
@@ -769,16 +957,36 @@
         async function updateTotals() {
             const previous = parseInt(document.getElementById("previous").value) || 0;
             let regularDays = 0;
+            let totalParentalHoursTaken = 0;
+            let totalBloodDonationDaysTaken = 0;
+            let totalSpecialDaysTaken = 0;
+
             leaves.forEach(leave => {
-                if (leave.saved && leave.regular) regularDays += leave.days;
+                if (leave.saved) {
+                    if (leave.regular) regularDays += leave.days;
+                    if (leave.parental) totalParentalHoursTaken += leave.parental_hours || 0;
+                    if (leave.blood_donation) totalBloodDonationDaysTaken += leave.blood_donation_days || 0;
+                    if (leave.special) totalSpecialDaysTaken += leave.special_days || 0;
+                }
             });
+
             const entitled_2025 = selectedEmployee.entitled_2025;
             const total_2025 = entitled_2025 + previous;
             const remaining = total_2025 - regularDays;
+            const totalParentalHours = calculateTotalParentalHours(selectedEmployee);
+            const remainingParentalHours = totalParentalHours - totalParentalHoursTaken;
+            const remainingBloodDonationDays = TOTAL_BLOOD_DONATION_DAYS - totalBloodDonationDaysTaken;
+            const remainingSpecialDays = TOTAL_SPECIAL_DAYS - totalSpecialDaysTaken;
 
             document.getElementById("entitled").textContent = entitled_2025;
             document.getElementById("total").textContent = total_2025;
             document.getElementById("remaining").textContent = remaining;
+            document.getElementById("totalParentalHours").textContent = totalParentalHours;
+            document.getElementById("remainingParentalHours").textContent = remainingParentalHours;
+            document.getElementById("totalBloodDonationDays").textContent = TOTAL_BLOOD_DONATION_DAYS;
+            document.getElementById("remainingBloodDonationDays").textContent = remainingBloodDonationDays;
+            document.getElementById("totalSpecialDays").textContent = TOTAL_SPECIAL_DAYS;
+            document.getElementById("remainingSpecialDays").textContent = remainingSpecialDays;
 
             const { error } = await supabase
                 .from("employees")
@@ -809,12 +1017,13 @@
                     <td><span class="days">${leave.days}</span></td>
                     <td><input type="radio" name="leave${index}" value="regular" ${leave.regular ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
                     <td><input type="radio" name="leave${index}" value="sick" ${leave.sick ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
-                    <td><input type="radio" name="leave${index}" value="parental" ${leave.parental ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="parental" ${leave.parental ? "checked" : ""} ${leave.saved ? 'disabled' : ''} ${leave.days > 1 ? 'disabled' : ''} onchange="updateLeave(${index})"><input type="number" class="parental-hours-input" id="parentalHours${index}" value="${leave.parental_hours || ''}" placeholder="Ώρες" min="0" ${leave.saved ? 'disabled' : ''} style="display: ${leave.parental ? 'inline-block' : 'none'};"></td>
                     <td><input type="radio" name="leave${index}" value="educational" ${leave.educational ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
                     <td><input type="radio" name="leave${index}" value="special" ${leave.special ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
-                    <td><input type="radio" name="leave${index}" value="blood_donation" ${leave.blood_donation ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="blood_donation" ${leave.blood_donation ? "checked" : ""} ${leave.saved ? 'disabled' : ''} ${leave.days !== 2 ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
                     <td><input type="radio" name="leave${index}" value="day_off" ${leave.day_off ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
                     <td><input type="radio" name="leave${index}" value="other" ${leave.other ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="text" class="reason-input" id="reason${index}" value="${leave.reason || ''}" placeholder="Αιτιολογία (προαιρετικό)" ${leave.saved ? 'disabled' : ''}></td>
                     <td class="leave-actions">
                         <button onclick="saveLeave(${index})" ${leave.saved ? 'disabled' : ''}>Save</button>
                         <button onclick="deleteLeave(${index})">Delete</button>
@@ -830,14 +1039,17 @@
         }
 
         function generateReport() {
-            let totalDays = 0, regularDays = 0, sickDays = 0, parentalDays = 0, educationalDays = 0, specialDays = 0, bloodDonationDays = 0, dayOffDays = 0, otherDays = 0;
+            let totalDays = 0, regularDays = 0, sickDays = 0, parentalDays = 0, parentalHours = 0, educationalDays = 0, specialDays = 0, bloodDonationDays = 0, dayOffDays = 0, otherDays = 0;
 
             leaves.forEach(leave => {
                 if (leave.saved) {
                     totalDays += leave.days;
                     if (leave.regular) regularDays += leave.days;
                     if (leave.sick) sickDays += leave.days;
-                    if (leave.parental) parentalDays += leave.days;
+                    if (leave.parental) {
+                        parentalDays += leave.days;
+                        parentalHours += leave.parental_hours || 0;
+                    }
                     if (leave.educational) educationalDays += leave.days;
                     if (leave.special) specialDays += leave.days;
                     if (leave.blood_donation) bloodDonationDays += leave.days;
@@ -851,6 +1063,7 @@
             document.getElementById("regularDays").textContent = regularDays;
             document.getElementById("sickDays").textContent = sickDays;
             document.getElementById("parentalDays").textContent = parentalDays;
+            document.getElementById("parentalHours").textContent = parentalHours;
             document.getElementById("educationalDays").textContent = educationalDays;
             document.getElementById("specialDays").textContent = specialDays;
             document.getElementById("bloodDonationDays").textContent = bloodDonationDays;
