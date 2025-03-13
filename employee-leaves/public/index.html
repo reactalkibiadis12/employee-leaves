@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Διαχείριση Αδειών Εργαζομένων</title>
-    <!-- Επιστροφή στο CDN για το Flatpickr CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         * {
@@ -59,7 +58,7 @@
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
-            cursor: pointer;
+            cursor:，其他pointer;
             transition: background-color 0.3s;
         }
 
@@ -262,7 +261,7 @@
         }
 
         .leave-actions button {
-            padding: 8 усилpx 12px;
+            padding: 8px 12px;
             margin: 0 5px;
             border: none;
             border-radius: 5px;
@@ -517,7 +516,7 @@
             <table id="leaveTable">
                 <thead>
                     <tr>
-                        <th>Α/Α</th><th>ΑΠΟ</th><th>ΕΩΣ</th><th>ΜΕΡΕΣ</th><th>ΚΑΝΟΝΙΚΗ</th><th>ΑΝΑΡ/ΚΗ</th><th>ΓΟΝΙΚΗ</th><th>ΕΚΠ/ΚΗ</th><th>Υ.Δ</th><th>ΑΙΜΟΔΟΣΙΑ</th><th>ΑΡΓΙΕΣ</th><th>ΡΕΠΟ</th><th>ΑΛΛΗ</th><th>ΑΙΤΙΟΛΟΓΙΑ</th><th>ΕΝΕΡΓΕΙΕΣ</th><th>ΥΠΑΛΛΗΛΟΣ</th><th>ΤΜΗΜΑΤΑΡΧΗΣ</th><th>ΠΡΟΪΣΤΑΜΕΝΟΣ</th>
+                        <th>Α/Α</th><th>ΑΠΟ</th><th>ΕΩΣ</th><th>ΜΕΡΕΣ</th><th>ΚΑΝΟΝΙΚΗ</th><th>ΑΝΑΡ/ΚΗ</th><th>ΓΟΝΙΚΗ</th><th>ΕΚΠ/ΚΗ</th><th>Υ.Δ</th><th>ΑΙΜΟΔΟΣΙΑ</th><th>ΑΡΓΙΕΣ</th><th>ΡΕΠΟ</th><th>ΑΛΛΗ</th><th>ΑΙΤΙΟ                <th>ΑΙΤΙΟΛΟΓΙΑ</th><th>ΕΝΕΡΓΕΙΕΣ</th><th>ΥΠΑΛΛΗΛΟΣ</th><th>ΤΜΗΜΑΤΑΡΧΗΣ</th><th>ΠΡΟΪΣΤΑΜΕΝΟΣ</th>
                     </tr>
                 </thead>
                 <tbody id="leaveTableBody"></tbody>
@@ -911,6 +910,7 @@
                 return;
             }
             leaves = leavesData.map(leave => ({ ...leave, saved: true }));
+            console.log("Loaded leaves:", leaves);
 
             const years = [...new Set(leaves.map(leave => new Date(leave.from_date).getFullYear()))];
             const currentYearNow = new Date().getFullYear();
@@ -950,7 +950,7 @@
         async function getGreekHolidays(year) {
             const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/GR`);
             const holidays = await response.json();
-            console.log(`Holidays for ${year}:`, holidays.map(h => h.date)); // Για debugging
+            console.log(`Holidays for ${year}:`, holidays.map(h => h.date));
             return holidays.map(h => h.date);
         }
 
@@ -980,7 +980,6 @@
                 <td class="leave-actions">
                     <button class="cancel-btn" onclick="cancelLeaveRow(${rowIndex})">X</button>
                     <button onclick="saveLeave(${rowIndex})">Αποθήκευση</button>
-                    <button onclick="deleteLeave(${rowIndex})" disabled>Διαγραφή</button>
                 </td>
                 <td></td><td></td><td></td>
             `;
@@ -1179,57 +1178,70 @@
             };
 
             const { data, error } = await supabase.from("leaves").insert(leaveData).select();
-            if (error) return console.error("Error saving leave:", error);
+            if (error) {
+                console.error("Error saving leave:", error);
+                alert("Σφάλμα κατά την αποθήκευση της άδειας: " + error.message);
+                return;
+            }
             leaves[index] = { ...data[0], saved: true };
-
             renderLeaveTable();
             await updateTotals();
         }
 
         async function deleteLeave(leaveId) {
-    const leaveIndex = leaves.findIndex(leave => leave.id === leaveId);
-    if (leaveIndex === -1) {
-        console.error("Leave with ID not found:", leaveId);
-        alert("Η άδεια δεν βρέθηκε!");
-        return;
-    }
+            console.log("Attempting to delete leave with ID:", leaveId);
 
-    const leave = leaves[leaveIndex];
-    console.log("Attempting to delete leave:", leave);
+            const leaveIndex = leaves.findIndex(leave => leave.id === leaveId);
+            let leave = leaveIndex !== -1 ? leaves[leaveIndex] : null;
 
-    if (!leave.saved) {
-        console.log("Leave not saved yet, removing locally:", leaveId);
-        leaves.splice(leaveIndex, 1);
-        renderLeaveTable();
-        return;
-    }
+            if (!leave) {
+                const { data, error } = await supabase
+                    .from("leaves")
+                    .select("*")
+                    .eq("id", leaveId)
+                    .single();
+                if (error || !data) {
+                    console.error("Error fetching leave from database or not found:", error);
+                    alert("Η άδεια δεν βρέθηκε στη βάση!");
+                    return;
+                }
+                leave = data;
+                console.log("Leave fetched from database:", leave);
+            }
 
-    if (confirm("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτήν την άδεια;")) {
-        console.log("Confirmed deletion for leave ID:", leaveId);
-        try {
-            const { error } = await supabase
-                .from("leaves")
-                .delete()
-                .eq("id", leaveId);
-
-            if (error) {
-                console.error("Error deleting leave from database:", error);
-                alert("Σφάλμα κατά τη διαγραφή της άδειας: " + error.message);
+            if (!leave.saved) {
+                console.log("Leave not saved yet, removing locally:", leaveId);
+                if (leaveIndex !== -1) leaves.splice(leaveIndex, 1);
+                renderLeaveTable();
                 return;
             }
 
-            console.log("Leave deleted successfully from database, removing locally:", leaveId);
-            leaves.splice(leaveIndex, 1);
-            renderLeaveTable();
-            await updateTotals();
-        } catch (err) {
-            console.error("Unexpected error during deletion:", err);
-            alert("Προέκυψε απρόσμενο σφάλμα κατά τη διαγραφή!");
+            if (confirm("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτήν την άδεια;")) {
+                console.log("Confirmed deletion for leave ID:", leaveId);
+                try {
+                    const { error } = await supabase
+                        .from("leaves")
+                        .delete()
+                        .eq("id", leaveId);
+
+                    if (error) {
+                        console.error("Error deleting leave from database:", error);
+                        alert("Σφάλμα κατά τη διαγραφή της άδειας: " + error.message);
+                        return;
+                    }
+
+                    console.log("Leave deleted successfully from database:", leaveId);
+                    if (leaveIndex !== -1) leaves.splice(leaveIndex, 1);
+                    renderLeaveTable();
+                    await updateTotals();
+                } catch (err) {
+                    console.error("Unexpected error during deletion:", err);
+                    alert("Προέκυψε απρόσμενο σφάλμα κατά τη διαγραφή!");
+                }
+            } else {
+                console.log("Deletion cancelled by user");
+            }
         }
-    } else {
-        console.log("Deletion cancelled by user");
-    }
-}
 
         async function updateTotals() {
             const previous = parseInt(document.getElementById("previous").value) || 0;
@@ -1284,94 +1296,94 @@
         }
 
         function renderLeaveTable() {
-    const tbody = document.getElementById("leaveTableBody");
-    tbody.innerHTML = "";
-    const filteredLeaves = leaves.filter(leave => new Date(leave.from_date).getFullYear() === selectedYear);
-    filteredLeaves.forEach(async (leave, index) => {
-        const row = document.createElement("tr");
+            const tbody = document.getElementById("leaveTableBody");
+            tbody.innerHTML = "";
+            const filteredLeaves = leaves.filter(leave => new Date(leave.from_date).getFullYear() === selectedYear);
+            filteredLeaves.forEach(async (leave, index) => {
+                const row = document.createElement("tr");
 
-        const year = new Date(leave.from_date).getFullYear();
-        if (!greekHolidays[year]) {
-            greekHolidays[year] = await getGreekHolidays(year);
-        }
-        const holidays = greekHolidays[year];
-        let holidayCount = 0;
-        const start = new Date(leave.from_date);
-        const end = new Date(leave.to_date);
-        let current = new Date(start);
-        while (current <= end) {
-            const dateStr = current.toISOString().split('T')[0];
-            if (holidays.includes(dateStr)) holidayCount++;
-            current.setDate(current.getDate() + 1);
-        }
+                const year = new Date(leave.from_date).getFullYear();
+                if (!greekHolidays[year]) {
+                    greekHolidays[year] = await getGreekHolidays(year);
+                }
+                const holidays = greekHolidays[year];
+                let holidayCount = 0;
+                const start = new Date(leave.from_date);
+                const end = new Date(leave.to_date);
+                let current = new Date(start);
+                while (current <= end) {
+                    const dateStr = current.toISOString().split('T')[0];
+                    if (holidays.includes(dateStr)) holidayCount++;
+                    current.setDate(current.getDate() + 1);
+                }
 
-        row.innerHTML = `
-            <td>${index + 1}</td>
-            <td><input type="text" class="flatpickr" id="fromDate${index}" value="${leave.from_date}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"><span class="holiday-warning" id="rangeHolidayWarning${index}">${holidayCount > 0 ? "Το εύρος περιλαμβάνει αργίες" : ""}</span></td>
-            <td><input type="text" class="flatpickr" id="toDate${index}" value="${leave.to_date}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"></td>
-            <td><span class="days">${leave.days}</span></td>
-            <td><input type="radio" name="leave${index}" value="regular" ${leave.regular ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
-            <td><input type="radio" name="leave${index}" value="sick" ${leave.sick ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
-            <td><input type="radio" name="leave${index}" value="parental" ${leave.parental ? "checked" : ""} ${leave.saved ? 'disabled' : ''} ${leave.days > 1 ? 'disabled' : ''} onchange="updateLeave(${index})"><input type="number" class="parental-hours-input" id="parentalHours${index}" value="${leave.parental_hours || ''}" placeholder="Ώρες" min="0" ${leave.saved ? 'disabled' : ''} style="display: ${leave.parental ? 'inline-block' : 'none'};"></td>
-            <td><input type="radio" name="leave${index}" value="educational" ${leave.educational ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
-            <td><input type="radio" name="leave${index}" value="special" ${leave.special ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
-            <td><input type="radio" name="leave${index}" value="blood_donation" ${leave.blood_donation ? "checked" : ""} ${leave.saved ? 'disabled' : ''} ${leave.days !== 2 ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
-            <td><span class="holidays">${leave.holidays || 0}</span></td>
-            <td><input type="radio" name="leave${index}" value="day_off" ${leave.day_off ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
-            <td><input type="radio" name="leave${index}" value="other" ${leave.other ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
-            <td><input type="text" class="reason-input" id="reason${index}" value="${leave.reason || ''}" placeholder="Αιτιολογία (προαιρετικό)" ${leave.saved ? 'disabled' : ''}></td>
-            <td class="leave-actions">
-                ${!leave.saved ? `<button class="cancel-btn" onclick="cancelLeaveRow(${index})">X</button>` : ''}
-                <button onclick="saveLeave(${index})" ${leave.saved ? 'disabled' : ''}>Αποθήκευση</button>
-                <button onclick="deleteLeave('${leave.id}')">Διαγραφή</button>
-            </td>
-            <td></td><td></td><td></td>
-        `;
-        tbody.appendChild(row);
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><input type="text" class="flatpickr" id="fromDate${index}" value="${leave.from_date}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"><span class="holiday-warning" id="rangeHolidayWarning${index}">${holidayCount > 0 ? "Το εύρος περιλαμβάνει αργίες" : ""}</span></td>
+                    <td><input type="text" class="flatpickr" id="toDate${index}" value="${leave.to_date}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"></td>
+                    <td><span class="days">${leave.days}</span></td>
+                    <td><input type="radio" name="leave${index}" value="regular" ${leave.regular ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="sick" ${leave.sick ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="parental" ${leave.parental ? "checked" : ""} ${leave.saved ? 'disabled' : ''} ${leave.days > 1 ? 'disabled' : ''} onchange="updateLeave(${index})"><input type="number" class="parental-hours-input" id="parentalHours${index}" value="${leave.parental_hours || ''}" placeholder="Ώρες" min="0" ${leave.saved ? 'disabled' : ''} style="display: ${leave.parental ? 'inline-block' : 'none'};"></td>
+                    <td><input type="radio" name="leave${index}" value="educational" ${leave.educational ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="special" ${leave.special ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="blood_donation" ${leave.blood_donation ? "checked" : ""} ${leave.saved ? 'disabled' : ''} ${leave.days !== 2 ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><span class="holidays">${leave.holidays || 0}</span></td>
+                    <td><input type="radio" name="leave${index}" value="day_off" ${leave.day_off ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="other" ${leave.other ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="text" class="reason-input" id="reason${index}" value="${leave.reason || ''}" placeholder="Αιτιολογία (προαιρετικό)" ${leave.saved ? 'disabled' : ''}></td>
+                    <td class="leave-actions">
+                        ${!leave.saved ? `<button class="cancel-btn" onclick="cancelLeaveRow(${index})">X</button>` : ''}
+                        <button onclick="saveLeave(${index})" ${leave.saved ? 'disabled' : ''}>Αποθήκευση</button>
+                        ${leave.saved ? `<button onclick="deleteLeave('${leave.id}')">Διαγραφή</button>` : ''}
+                    </td>
+                    <td></td><td></td><td></td>
+                `;
+                tbody.appendChild(row);
 
-        document.getElementById(`rangeHolidayWarning${index}`).style.display = holidayCount > 0 ? "block" : "none";
+                document.getElementById(`rangeHolidayWarning${index}`).style.display = holidayCount > 0 ? "block" : "none";
 
-        if (!leave.saved) {
-            flatpickr(`#fromDate${index}`, {
-                dateFormat: "Y-m-d",
-                locale: "el",
-                disable: [],
-                onDayCreate: function(dObj, dStr, fp, dayElem) {
-                    const date = dayElem.dateObj;
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, "0");
-                    const day = String(date.getDate()).padStart(2, "0");
-                    const dateStr = `${year}-${month}-${day}`;
-                    if (greekHolidays[year] && greekHolidays[year].includes(dateStr)) {
-                        dayElem.classList.add("holiday");
-                    }
-                },
-                onChange: function(selectedDates, dateStr, instance) {
-                    calculateDays(instance.element, index);
+                if (!leave.saved) {
+                    flatpickr(`#fromDate${index}`, {
+                        dateFormat: "Y-m-d",
+                        locale: "el",
+                        disable: [],
+                        onDayCreate: function(dObj, dStr, fp, dayElem) {
+                            const date = dayElem.dateObj;
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, "0");
+                            const day = String(date.getDate()).padStart(2, "0");
+                            const dateStr = `${year}-${month}-${day}`;
+                            if (greekHolidays[year] && greekHolidays[year].includes(dateStr)) {
+                                dayElem.classList.add("holiday");
+                            }
+                        },
+                        onChange: function(selectedDates, dateStr, instance) {
+                            calculateDays(instance.element, index);
+                        }
+                    });
+
+                    flatpickr(`#toDate${index}`, {
+                        dateFormat: "Y-m-d",
+                        locale: "el",
+                        disable: [],
+                        onDayCreate: function(dObj, dStr, fp, dayElem) {
+                            const date = dayElem.dateObj;
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, "0");
+                            const day = String(date.getDate()).padStart(2, "0");
+                            const dateStr = `${year}-${month}-${day}`;
+                            if (greekHolidays[year] && greekHolidays[year].includes(dateStr)) {
+                                dayElem.classList.add("holiday");
+                            }
+                        },
+                        onChange: function(selectedDates, dateStr, instance) {
+                            calculateDays(instance.element, index);
+                        }
+                    });
                 }
             });
-
-            flatpickr(`#toDate${index}`, {
-                dateFormat: "Y-m-d",
-                locale: "el",
-                disable: [],
-                onDayCreate: function(dObj, dStr, fp, dayElem) {
-                    const date = dayElem.dateObj;
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, "0");
-                    const day = String(date.getDate()).padStart(2, "0");
-                    const dateStr = `${year}-${month}-${day}`;
-                    if (greekHolidays[year] && greekHolidays[year].includes(dateStr)) {
-                        dayElem.classList.add("holiday");
-                    }
-                },
-                onChange: function(selectedDates, dateStr, instance) {
-                    calculateDays(instance.element, index);
-                }
-            });
         }
-    });
-}
 
         function printLeaves() {
             window.print();
