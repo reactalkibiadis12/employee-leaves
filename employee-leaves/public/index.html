@@ -58,7 +58,7 @@
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
-            cursor:，其他pointer;
+            cursor: pointer;
             transition: background-color 0.3s;
         }
 
@@ -392,40 +392,40 @@
             background-color: #c0392b;
         }
 
-       @media print {
-    body {
-        visibility: hidden;
-    }
-    .print-header, .print-header *, #leaveTable, #leaveTable *, .print-report, .print-report * {
-        visibility: visible;
-    }
-    .print-header {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-    }
-    #leaveTable {
-        position: absolute;
-        top: 100px;
-        left: 0;
-        width: 100%;
-    }
-    .print-report {
-        position: absolute;
-        top: 500px; /* Προσαρμόστε ανάλογα το ύψος του πίνακα */
-        left: 0;
-        width: 100%;
-    }
-    @page {
-        size: landscape;
-    }
-    body {
-        transform: scale(0.8);
-        transform-origin: 0 0;
-        width: 125%;
-    }
-}
+        @media print {
+            body {
+                visibility: hidden;
+            }
+            .print-header, .print-header *, #leaveTable, #leaveTable *, .print-report, .print-report * {
+                visibility: visible;
+            }
+            .print-header {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+            }
+            #leaveTable {
+                position: absolute;
+                top: 100px;
+                left: 0;
+                width: 100%;
+            }
+            .print-report {
+                position: absolute;
+                top: 500px;
+                left: 0;
+                width: 100%;
+            }
+            @page {
+                size: landscape;
+            }
+            body {
+                transform: scale(0.8);
+                transform-origin: 0 0;
+                width: 125%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -665,12 +665,6 @@
         }
 
         checkAuth();
-
-        function formatDate(dateStr) {
-            if (!dateStr) return "";
-            const date = new Date(dateStr);
-            return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
-        }
 
         function toggleForm() {
             const form = document.getElementById("addEmployeeForm");
@@ -961,50 +955,49 @@
         }
 
         function addLeaveRow() {
-    if (selectedYear !== currentYear) {
-        alert("Μπορείτε να προσθέσετε άδειες μόνο για το τρέχον έτος!");
-        return;
-    }
-    const tbody = document.getElementById("leaveTableBody");
-    const rowIndex = leaves.filter(leave => new Date(leave.from_date).getFullYear() === selectedYear).length;
-    const row = document.createElement("tr");
-    row.innerHTML = `
-        <td>${rowIndex + 1}</td>
-        <td><input type="text" class="flatpickr" id="fromDate${rowIndex}" onchange="calculateDays(this, ${rowIndex})"><span class="holiday-warning" id="rangeHolidayWarning${rowIndex}"></span></td>
-        <td><input type="text" class="flatpickr" id="toDate${rowIndex}" onchange="calculateDays(this, ${rowIndex})"></td>
-        <td><span class="days">0</span></td>
-        <td><input type="radio" name="leave${rowIndex}" value="regular" onchange="updateLeave(${rowIndex})"></td>
-        <td><input type="radio" name="leave${rowIndex}" value="sick" onchange="updateLeave(${rowIndex})"></td>
-        <td><input type="radio" name="leave${rowIndex}" value="parental" onchange="updateLeave(${rowIndex})"><input type="number" class="parental-hours-input" id="parentalHours${rowIndex}" placeholder="Ώρες" min="0"></td>
-        <td><input type="radio" name="leave${rowIndex}" value="educational" onchange="updateLeave(${rowIndex})"></td>
-        <td><input type="radio" name="leave${rowIndex}" value="special" onchange="updateLeave(${rowIndex})"></td>
-        <td><input type="radio" name="leave${rowIndex}" value="blood_donation" onchange="updateLeave(${rowIndex})"></td>
-        <td><input type="radio" name="leave${rowIndex}" value="day_off" onchange="updateLeave(${rowIndex})"></td>
-        <td><input type="radio" name="leave${rowIndex}" value="other" onchange="updateLeave(${rowIndex})"></td>
-        <td><input type="text" class="reason-input" id="reason${rowIndex}" placeholder="Αιτιολογία (προαιρετικό)"></td>
-        <td class="leave-actions">
-            <button class="cancel-btn" onclick="cancelLeaveRow(${rowIndex})">X</button>
-            <button onclick="saveLeave(${rowIndex})">Αποθήκευση</button>
-        </td>
-        <td></td><td></td><td></td>
-    `;
-    tbody.appendChild(row);
-    leaves.push({
-        employee_id: selectedEmployee.id,
-        from_date: "",
-        to_date: "",
-        days: 0,
-        holidays: 0,
-        type: "",
-        parental_hours: 0,
-        blood_donation_days: 0,
-        special_days: 0,
-        reason: "",
-        saved: false
-    });
+            if (selectedYear !== currentYear) {
+                alert("Μπορείτε να προσθέσετε άδειες μόνο για το τρέχον έτος!");
+                return;
+            }
+            const tbody = document.getElementById("leaveTableBody");
+            const rowIndex = leaves.filter(leave => new Date(leave.from_date).getFullYear() === selectedYear).length;
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${rowIndex + 1}</td>
+                <td><input type="text" class="flatpickr" id="fromDate${rowIndex}" onchange="calculateDays(this, ${rowIndex})"><span class="holiday-warning" id="rangeHolidayWarning${rowIndex}"></span></td>
+                <td><input type="text" class="flatpickr" id="toDate${rowIndex}" onchange="calculateDays(this, ${rowIndex})"></td>
+                <td><span class="days">0</span></td>
+                <td><input type="radio" name="leave${rowIndex}" value="regular" onchange="updateLeave(${rowIndex})"></td>
+                <td><input type="radio" name="leave${rowIndex}" value="sick" onchange="updateLeave(${rowIndex})"></td>
+                <td><input type="radio" name="leave${rowIndex}" value="parental" onchange="updateLeave(${rowIndex})"><input type="number" class="parental-hours-input" id="parentalHours${rowIndex}" placeholder="Ώρες" min="0"></td>
+                <td><input type="radio" name="leave${rowIndex}" value="educational" onchange="updateLeave(${rowIndex})"></td>
+                <td><input type="radio" name="leave${rowIndex}" value="special" onchange="updateLeave(${rowIndex})"></td>
+                <td><input type="radio" name="leave${rowIndex}" value="blood_donation" onchange="updateLeave(${rowIndex})"></td>
+                <td><input type="radio" name="leave${rowIndex}" value="day_off" onchange="updateLeave(${rowIndex})"></td>
+                <td><input type="radio" name="leave${rowIndex}" value="other" onchange="updateLeave(${rowIndex})"></td>
+                <td><input type="text" class="reason-input" id="reason${rowIndex}" placeholder="Αιτιολογία (προαιρετικό)"></td>
+                <td class="leave-actions">
+                    <button class="cancel-btn" onclick="cancelLeaveRow(${rowIndex})">X</button>
+                    <button onclick="saveLeave(${rowIndex})">Αποθήκευση</button>
+                </td>
+                <td></td><td></td><td></td>
+            `;
+            tbody.appendChild(row);
+            leaves.push({
+                employee_id: selectedEmployee.id,
+                from_date: "",
+                to_date: "",
+                days: 0,
+                type: "",
+                parental_hours: 0,
+                blood_donation_days: 0,
+                special_days: 0,
+                reason: "",
+                saved: false
+            });
 
             flatpickr(`#fromDate${rowIndex}`, {
-                dateFormat: "d-m-Y",
+                dateFormat: "d/m/Y",
                 locale: "el",
                 disable: [],
                 onDayCreate: function(dObj, dStr, fp, dayElem) {
@@ -1023,7 +1016,7 @@
             });
 
             flatpickr(`#toDate${rowIndex}`, {
-                dateFormat: "d-m-Y",
+                dateFormat: "d/m/Y",
                 locale: "el",
                 disable: [],
                 onDayCreate: function(dObj, dStr, fp, dayElem) {
@@ -1047,79 +1040,78 @@
             renderLeaveTable();
         }
 
-       async function calculateDays(input, index) {
-    const row = input.parentElement.parentElement;
-    const fromInput = row.cells[1].querySelector("input");
-    const toInput = row.cells[2].querySelector("input");
-    const fromStr = fromInput.value;
-    const toStr = toInput.value;
-    const rangeWarning = document.getElementById(`rangeHolidayWarning${index}`);
+        async function calculateDays(input, index) {
+            const row = input.parentElement.parentElement;
+            const fromInput = row.cells[1].querySelector("input");
+            const toInput = row.cells[2].querySelector("input");
+            const fromStr = fromInput.value;
+            const toStr = toInput.value;
+            const rangeWarning = document.getElementById(`rangeHolidayWarning${index}`);
 
-    if (fromStr && toStr) {
-        const [fromDay, fromMonth, fromYear] = fromStr.split("/").map(Number);
-        const [toDay, toMonth, toYear] = toStr.split("/").map(Number);
-        const start = new Date(fromYear, fromMonth - 1, fromDay);
-        const end = new Date(toYear, toMonth - 1, toDay);
+            if (fromStr && toStr) {
+                const [fromDay, fromMonth, fromYear] = fromStr.split("/").map(Number);
+                const [toDay, toMonth, toYear] = toStr.split("/").map(Number);
+                const start = new Date(fromYear, fromMonth - 1, fromDay);
+                const end = new Date(toYear, toMonth - 1, toDay);
 
-        if (toYear !== fromYear) {
-            alert("Η ημερομηνία ΕΩΣ πρέπει να είναι στο ίδιο έτος με την ΑΠΟ!");
-            toInput.value = "";
-            leaves[index].to_date = "";
-            row.cells[3].querySelector(".days").textContent = "0";
-            rangeWarning.style.display = "none";
-            return;
+                if (toYear !== fromYear) {
+                    alert("Η ημερομηνία ΕΩΣ πρέπει να είναι στο ίδιο έτος με την ΑΠΟ!");
+                    toInput.value = "";
+                    leaves[index].to_date = "";
+                    row.cells[3].querySelector(".days").textContent = "0";
+                    rangeWarning.style.display = "none";
+                    return;
+                }
+
+                if (end < start) {
+                    alert("Η ημερομηνία ΕΩΣ πρέπει να είναι ίδια ή μεταγενέστερη από την ΑΠΟ!");
+                    toInput.value = fromStr;
+                    rangeWarning.style.display = "none";
+                    return;
+                }
+
+                const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+                const year = start.getFullYear();
+                if (!greekHolidays[year]) {
+                    greekHolidays[year] = await getGreekHolidays(year);
+                }
+                const holidays = greekHolidays[year];
+                let holidayCount = 0;
+                let current = new Date(start);
+                while (current <= end) {
+                    const dateStr = current.toISOString().split('T')[0];
+                    if (holidays.includes(dateStr)) holidayCount++;
+                    current.setDate(current.getDate() + 1);
+                }
+
+                rangeWarning.textContent = holidayCount > 0 ? "Το εύρος περιλαμβάνει αργίες" : "";
+                rangeWarning.style.display = holidayCount > 0 ? "block" : "none";
+
+                row.cells[3].querySelector(".days").textContent = days;
+                leaves[index].from_date = `${fromYear}-${fromMonth.toString().padStart(2, "0")}-${fromDay.toString().padStart(2, "0")}`;
+                leaves[index].to_date = `${toYear}-${toMonth.toString().padStart(2, "0")}-${toDay.toString().padStart(2, "0")}`;
+                leaves[index].days = days;
+
+                const parentalInput = row.cells[6].querySelector("input[type='radio']");
+                const bloodDonationInput = row.cells[9].querySelector("input[type='radio']");
+                const specialInput = row.cells[8].querySelector("input[type='radio']");
+
+                parentalInput.disabled = days > 1;
+                if (days > 1 && parentalInput.checked) {
+                    parentalInput.checked = false;
+                    leaves[index].type = "";
+                }
+
+                bloodDonationInput.disabled = days !== 2;
+                if (days !== 2 && bloodDonationInput.checked) {
+                    bloodDonationInput.checked = false;
+                    leaves[index].type = "";
+                }
+            } else {
+                rangeWarning.style.display = "none";
+            }
         }
-
-        if (end < start) {
-            alert("Η ημερομηνία ΕΩΣ πρέπει να είναι ίδια ή μεταγενέστερη από την ΑΠΟ!");
-            toInput.value = fromStr;
-            rangeWarning.style.display = "none";
-            return;
-        }
-
-        const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-
-        const year = start.getFullYear();
-        if (!greekHolidays[year]) {
-            greekHolidays[year] = await getGreekHolidays(year);
-        }
-        const holidays = greekHolidays[year];
-        let holidayCount = 0;
-        let current = new Date(start);
-        while (current <= end) {
-            const dateStr = current.toISOString().split('T')[0];
-            if (holidays.includes(dateStr)) holidayCount++;
-            current.setDate(current.getDate() + 1);
-        }
-
-        rangeWarning.textContent = holidayCount > 0 ? "Το εύρος περιλαμβάνει αργίες" : "";
-        rangeWarning.style.display = holidayCount > 0 ? "block" : "none";
-
-        row.cells[3].querySelector(".days").textContent = days;
-        leaves[index].from_date = `${fromYear}-${fromMonth.toString().padStart(2, "0")}-${fromDay.toString().padStart(2, "0")}`;
-        leaves[index].to_date = `${toYear}-${toMonth.toString().padStart(2, "0")}-${toDay.toString().padStart(2, "0")}`;
-        leaves[index].days = days;
-        leaves[index].holidays = holidayCount;
-
-        const parentalInput = row.cells[6].querySelector("input[type='radio']");
-        const bloodDonationInput = row.cells[9].querySelector("input[type='radio']");
-        const specialInput = row.cells[8].querySelector("input[type='radio']");
-
-        parentalInput.disabled = days > 1;
-        if (days > 1 && parentalInput.checked) {
-            parentalInput.checked = false;
-            leaves[index].type = "";
-        }
-
-        bloodDonationInput.disabled = days !== 2;
-        if (days !== 2 && bloodDonationInput.checked) {
-            bloodDonationInput.checked = false;
-            leaves[index].type = "";
-        }
-    } else {
-        rangeWarning.style.display = "none";
-    }
-}
 
         function updateLeave(index) {
             const row = document.getElementById("leaveTableBody").rows[index];
@@ -1134,130 +1126,127 @@
             }
         }
 
-       async function saveLeave(index) {
-    const leave = leaves[index];
-    if (!leave.from_date || !leave.to_date) {
-        alert("Παρακαλώ συμπληρώστε τις ημερομηνίες ΑΠΟ και ΕΩΣ!");
-        return;
-    }
-    if (!leave.type) {
-        alert("Παρακαλώ επιλέξτε έναν τύπο άδειας!");
-        return;
-    }
+        async function saveLeave(index) {
+            const leave = leaves[index];
+            if (!leave.from_date || !leave.to_date) {
+                alert("Παρακαλώ συμπληρώστε τις ημερομηνίες ΑΠΟ και ΕΩΣ!");
+                return;
+            }
+            if (!leave.type) {
+                alert("Παρακαλώ επιλέξτε έναν τύπο άδειας!");
+                return;
+            }
 
-    const startDate = new Date(leave.from_date);
-    const endDate = new Date(leave.to_date);
-    const year = startDate.getFullYear();
-    if (!greekHolidays[year]) {
-        greekHolidays[year] = await getGreekHolidays(year);
-    }
-    const holidays = greekHolidays[year];
-    let holidayCount = 0;
-    let current = new Date(startDate);
-    while (current <= endDate) {
-        const dateStr = current.toISOString().split('T')[0];
-        if (holidays.includes(dateStr)) holidayCount++;
-        current.setDate(current.getDate() + 1);
-    }
-    if (holidayCount > 0) {
-        alert("Δεν επιτρέπεται η αποθήκευση άδειας που περιλαμβάνει αργίες!");
-        return;
-    }
+            const startDate = new Date(leave.from_date);
+            const endDate = new Date(leave.to_date);
+            const year = startDate.getFullYear();
+            if (!greekHolidays[year]) {
+                greekHolidays[year] = await getGreekHolidays(year);
+            }
+            const holidays = greekHolidays[year];
+            let holidayCount = 0;
+            let current = new Date(startDate);
+            while (current <= endDate) {
+                const dateStr = current.toISOString().split('T')[0];
+                if (holidays.includes(dateStr)) holidayCount++;
+                current.setDate(current.getDate() + 1);
+            }
+            if (holidayCount > 0) {
+                alert("Δεν επιτρέπεται η αποθήκευση άδειας που περιλαμβάνει αργίες!");
+                return;
+            }
 
-    const reason = document.getElementById(`reason${index}`).value || null;
-    const totalParentalHours = leave.type === "parental" ? (parseInt(document.getElementById(`parentalHours${index}`).value) || 0) : 0;
+            const reason = document.getElementById(`reason${index}`).value || null;
+            const totalParentalHours = leave.type === "parental" ? (parseInt(document.getElementById(`parentalHours${index}`).value) || 0) : 0;
 
-    if (leave.type === "special") {
-        const totalSpecialDaysTaken = leaves
-            .filter(l => l.saved && l.special && new Date(l.from_date).getFullYear() === year)
-            .reduce((sum, l) => sum + l.days, 0);
-        if (totalSpecialDaysTaken + leave.days > TOTAL_SPECIAL_DAYS) {
-            alert(`Ο εργαζόμενος έχει ξεπεράσει το όριο των ${TOTAL_SPECIAL_DAYS} ημερών Υ.Δ για το ${year}!`);
-            return;
-        }
-    }
+            if (leave.type === "special") {
+                const totalSpecialDaysTaken = leaves
+                    .filter(l => l.saved && l.special && new Date(l.from_date).getFullYear() === year)
+                    .reduce((sum, l) => sum + l.days, 0);
+                if (totalSpecialDaysTaken + leave.days > TOTAL_SPECIAL_DAYS) {
+                    alert(`Ο εργαζόμενος έχει ξεπεράσει το όριο των ${TOTAL_SPECIAL_DAYS} ημερών Υ.Δ για το ${year}!`);
+                    return;
+                }
+            }
 
-    const leaveData = {
-        employee_id: selectedEmployee.id,
-        from_date: leave.from_date,
-        to_date: leave.to_date,
-        days: leave.days,
-        regular: leave.type === "regular",
-        sick: leave.type === "sick",
-        parental: leave.type === "parental",
-        educational: leave.type === "educational",
-        special: leave.type === "special",
-        blood_donation: leave.type === "blood_donation",
-        day_off: leave.type === "day_off",
-        other: leave.type === "other",
-        parental_hours: totalParentalHours,
-        blood_donation_days: leave.type === "blood_donation" ? leave.days : 0,
-        special_days: leave.type === "special" ? leave.days : 0,
-        reason: reason
-    };
+            const leaveData = {
+                employee_id: selectedEmployee.id,
+                from_date: leave.from_date,
+                to_date: leave.to_date,
+                days: leave.days,
+                regular: leave.type === "regular",
+                sick: leave.type === "sick",
+                parental: leave.type === "parental",
+                educational: leave.type === "educational",
+                special: leave.type === "special",
+                blood_donation: leave.type === "blood_donation",
+                day_off: leave.type === "day_off",
+                other: leave.type === "other",
+                parental_hours: totalParentalHours,
+                blood_donation_days: leave.type === "blood_donation" ? leave.days : 0,
+                special_days: leave.type === "special" ? leave.days : 0,
+                reason: reason
+            };
 
-    const { data, error } = await supabase.from("leaves").insert(leaveData).select();
-    if (error) {
-        console.error("Error saving leave:", error);
-        alert("Σφάλμα κατά την αποθήκευση της άδειας: " + error.message);
-        return;
-    }
-    leaves[index] = { ...data[0], saved: true };
-    renderLeaveTable();
-    await updateTotals();
-}
-    async function deleteLeave(leaveId) {
-    console.log("Attempting to delete leave with ID:", leaveId);
-
-    // Βρίσκουμε τη θέση της άδειας στο array leaves
-    const leaveIndex = leaves.findIndex(leave => leave.id === leaveId);
-    let leave = leaveIndex !== -1 ? leaves[leaveIndex] : null;
-
-    // Αν δεν βρεθεί στο leaves, κάνουμε fetch από τη βάση
-    if (!leave) {
-        const { data, error } = await supabase
-            .from("leaves")
-            .select("*")
-            .eq("id", leaveId)
-            .single();
-        if (error || !data) {
-            console.error("Error fetching leave from database or not found:", error);
-            alert("Η άδεια δεν βρέθηκε στη βάση!");
-            return;
-        }
-        leave = data;
-        console.log("Leave fetched from database:", leave);
-    }
-
-    // Εμφάνιση παραθύρου επιβεβαίωσης
-    if (!confirm("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτήν την άδεια;")) {
-        console.log("Deletion cancelled by user");
-        return;
-    }
-
-    // Εκτέλεση διαγραφής
-    console.log("Confirmed deletion for leave ID:", leaveId);
-    try {
-        const { error } = await supabase
-            .from("leaves")
-            .delete()
-            .eq("id", leaveId);
-
-        if (error) {
-            console.error("Error deleting leave from database:", error);
-            alert("Σφάλμα κατά τη διαγραφή της άδειας: " + error.message);
-            return;
+            const { data, error } = await supabase.from("leaves").insert(leaveData).select();
+            if (error) {
+                console.error("Error saving leave:", error);
+                alert("Σφάλμα κατά την αποθήκευση της άδειας: " + error.message);
+                return;
+            }
+            leaves[index] = { ...data[0], saved: true };
+            renderLeaveTable();
+            await updateTotals();
         }
 
-        console.log("Leave deleted successfully from database:", leaveId);
-        if (leaveIndex !== -1) leaves.splice(leaveIndex, 1);
-        renderLeaveTable();
-        await updateTotals();
-    } catch (err) {
-        console.error("Unexpected error during deletion:", err);
-        alert("Προέκυψε απρόσμενο σφάλμα κατά τη διαγραφή!");
-    }
-}
+        async function deleteLeave(leaveId) {
+            console.log("Attempting to delete leave with ID:", leaveId);
+
+            const leaveIndex = leaves.findIndex(leave => leave.id === leaveId);
+            let leave = leaveIndex !== -1 ? leaves[leaveIndex] : null;
+
+            if (!leave) {
+                const { data, error } = await supabase
+                    .from("leaves")
+                    .select("*")
+                    .eq("id", leaveId)
+                    .single();
+                if (error || !data) {
+                    console.error("Error fetching leave from database or not found:", error);
+                    alert("Η άδεια δεν βρέθηκε στη βάση!");
+                    return;
+                }
+                leave = data;
+                console.log("Leave fetched from database:", leave);
+            }
+
+            if (!confirm("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτήν την άδεια;")) {
+                console.log("Deletion cancelled by user");
+                return;
+            }
+
+            console.log("Confirmed deletion for leave ID:", leaveId);
+            try {
+                const { error } = await supabase
+                    .from("leaves")
+                    .delete()
+                    .eq("id", leaveId);
+
+                if (error) {
+                    console.error("Error deleting leave from database:", error);
+                    alert("Σφάλμα κατά τη διαγραφή της άδειας: " + error.message);
+                    return;
+                }
+
+                console.log("Leave deleted successfully from database:", leaveId);
+                if (leaveIndex !== -1) leaves.splice(leaveIndex, 1);
+                renderLeaveTable();
+                await updateTotals();
+            } catch (err) {
+                console.error("Unexpected error during deletion:", err);
+                alert("Προέκυψε απρόσμενο σφάλμα κατά τη διαγραφή!");
+            }
+        }
 
         async function updateTotals() {
             const previous = parseInt(document.getElementById("previous").value) || 0;
@@ -1311,102 +1300,103 @@
             }
         }
 
-function renderLeaveTable() {
-    const tbody = document.getElementById("leaveTableBody");
-    tbody.innerHTML = "";
-    const filteredLeaves = leaves.filter(leave => new Date(leave.from_date).getFullYear() === selectedYear);
-    filteredLeaves.forEach(async (leave, index) => {
-        const row = document.createElement("tr");
+        function renderLeaveTable() {
+            const tbody = document.getElementById("leaveTableBody");
+            tbody.innerHTML = "";
+            const filteredLeaves = leaves.filter(leave => new Date(leave.from_date).getFullYear() === selectedYear);
+            filteredLeaves.forEach(async (leave, index) => {
+                const row = document.createElement("tr");
 
-        const year = new Date(leave.from_date).getFullYear();
-        if (!greekHolidays[year]) {
-            greekHolidays[year] = await getGreekHolidays(year);
-        }
-        const holidays = greekHolidays[year];
-        let holidayCount = 0;
-        const start = new Date(leave.from_date);
-        const end = new Date(leave.to_date);
-        let current = new Date(start);
-        while (current <= end) {
-            const dateStr = current.toISOString().split('T')[0];
-            if (holidays.includes(dateStr)) holidayCount++;
-            current.setDate(current.getDate() + 1);
-        }
+                const year = new Date(leave.from_date).getFullYear();
+                if (!greekHolidays[year]) {
+                    greekHolidays[year] = await getGreekHolidays(year);
+                }
+                const holidays = greekHolidays[year];
+                let holidayCount = 0;
+                const start = new Date(leave.from_date);
+                const end = new Date(leave.to_date);
+                let current = new Date(start);
+                while (current <= end) {
+                    const dateStr = current.toISOString().split('T')[0];
+                    if (holidays.includes(dateStr)) holidayCount++;
+                    current.setDate(current.getDate() + 1);
+                }
 
-        row.innerHTML = `
-            <td>${index + 1}</td>
-            <td><input type="text" class="flatpickr" id="fromDate${index}" value="${leave.from_date.split('-').reverse().join('/')}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"><span class="holiday-warning" id="rangeHolidayWarning${index}">${holidayCount > 0 ? "Το εύρος περιλαμβάνει αργίες" : ""}</span></td>
-            <td><input type="text" class="flatpickr" id="toDate${index}" value="${leave.to_date.split('-').reverse().join('/')}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"></td>
-            <td><span class="days">${leave.days}</span></td>
-            <td><input type="radio" name="leave${index}" value="regular" ${leave.regular ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
-            <td><input type="radio" name="leave${index}" value="sick" ${leave.sick ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
-            <td><input type="radio" name="leave${index}" value="parental" ${leave.parental ? "checked" : ""} ${leave.saved ? 'disabled' : ''} ${leave.days > 1 ? 'disabled' : ''} onchange="updateLeave(${index})"><input type="number" class="parental-hours-input" id="parentalHours${index}" value="${leave.parental_hours || ''}" placeholder="Ώρες" min="0" ${leave.saved ? 'disabled' : ''} style="display: ${leave.parental ? 'inline-block' : 'none'};"></td>
-            <td><input type="radio" name="leave${index}" value="educational" ${leave.educational ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
-            <td><input type="radio" name="leave${index}" value="special" ${leave.special ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
-            <td><input type="radio" name="leave${index}" value="blood_donation" ${leave.blood_donation ? "checked" : ""} ${leave.saved ? 'disabled' : ''} ${leave.days !== 2 ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
-            <td><input type="radio" name="leave${index}" value="day_off" ${leave.day_off ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
-            <td><input type="radio" name="leave${index}" value="other" ${leave.other ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
-            <td><input type="text" class="reason-input" id="reason${index}" value="${leave.reason || ''}" placeholder="Αιτιολογία (προαιρετικό)" ${leave.saved ? 'disabled' : ''}></td>
-            <td class="leave-actions">
-                ${!leave.saved ? `<button class="cancel-btn" onclick="cancelLeaveRow(${index})">X</button><button onclick="saveLeave(${index})">Αποθήκευση</button>` : `<button onclick="deleteLeave('${leave.id}')">Διαγραφή</button>`}
-            </td>
-            <td></td>
-            <td></td>
-            <td><img src="/signature.png" alt="Υπογραφή Προϊσταμένου" style="max-width: 100px; height: auto;"></td>
-        `;
-        tbody.appendChild(row);
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><input type="text" class="flatpickr" id="fromDate${index}" value="${leave.from_date.split('-').reverse().join('/')}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"><span class="holiday-warning" id="rangeHolidayWarning${index}">${holidayCount > 0 ? "Το εύρος περιλαμβάνει αργίες" : ""}</span></td>
+                    <td><input type="text" class="flatpickr" id="toDate${index}" value="${leave.to_date.split('-').reverse().join('/')}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"></td>
+                    <td><span class="days">${leave.days}</span></td>
+                    <td><input type="radio" name="leave${index}" value="regular" ${leave.regular ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="sick" ${leave.sick ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="parental" ${leave.parental ? "checked" : ""} ${leave.saved ? 'disabled' : ''} ${leave.days > 1 ? 'disabled' : ''} onchange="updateLeave(${index})"><input type="number" class="parental-hours-input" id="parentalHours${index}" value="${leave.parental_hours || ''}" placeholder="Ώρες" min="0" ${leave.saved ? 'disabled' : ''} style="display: ${leave.parental ? 'inline-block' : 'none'};"></td>
+                    <td><input type="radio" name="leave${index}" value="educational" ${leave.educational ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="special" ${leave.special ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="blood_donation" ${leave.blood_donation ? "checked" : ""} ${leave.saved ? 'disabled' : ''} ${leave.days !== 2 ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="day_off" ${leave.day_off ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="other" ${leave.other ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="text" class="reason-input" id="reason${index}" value="${leave.reason || ''}" placeholder="Αιτιολογία (προαιρετικό)" ${leave.saved ? 'disabled' : ''}></td>
+                    <td class="leave-actions">
+                        ${!leave.saved ? `<button class="cancel-btn" onclick="cancelLeaveRow(${index})">X</button><button onclick="saveLeave(${index})">Αποθήκευση</button>` : `<button onclick="deleteLeave('${leave.id}')">Διαγραφή</button>`}
+                    </td>
+                    <td></td>
+                    <td></td>
+                    <td><img src="/signature.png" alt="Υπογραφή Προϊσταμένου" style="max-width: 100px; height: auto;"></td>
+                `;
+                tbody.appendChild(row);
 
-        document.getElementById(`rangeHolidayWarning${index}`).style.display = holidayCount > 0 ? "block" : "none";
-        
-        if (!leave.saved) {
-            flatpickr(`#fromDate${index}`, {
-                dateFormat: "Y-m-d",
-                locale: "el",
-                disable: [],
-                onDayCreate: function(dObj, dStr, fp, dayElem) {
-                    const date = dayElem.dateObj;
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, "0");
-                    const day = String(date.getDate()).padStart(2, "0");
-                    const dateStr = `${year}-${month}-${day}`;
-                    if (greekHolidays[year] && greekHolidays[year].includes(dateStr)) {
-                        dayElem.classList.add("holiday");
-                    }
-                },
-                onChange: function(selectedDates, dateStr, instance) {
-                    calculateDays(instance.element, index);
+                document.getElementById(`rangeHolidayWarning${index}`).style.display = holidayCount > 0 ? "block" : "none";
+
+                if (!leave.saved) {
+                    flatpickr(`#fromDate${index}`, {
+                        dateFormat: "d/m/Y",
+                        locale: "el",
+                        disable: [],
+                        onDayCreate: function(dObj, dStr, fp, dayElem) {
+                            const date = dayElem.dateObj;
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, "0");
+                            const day = String(date.getDate()).padStart(2, "0");
+                            const dateStr = `${year}-${month}-${day}`;
+                            if (greekHolidays[year] && greekHolidays[year].includes(dateStr)) {
+                                dayElem.classList.add("holiday");
+                            }
+                        },
+                        onChange: function(selectedDates, dateStr, instance) {
+                            calculateDays(instance.element, index);
+                        }
+                    });
+
+                    flatpickr(`#toDate${index}`, {
+                        dateFormat: "d/m/Y",
+                        locale: "el",
+                        disable: [],
+                        onDayCreate: function(dObj, dStr, fp, dayElem) {
+                            const date = dayElem.dateObj;
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, "0");
+                            const day = String(date.getDate()).padStart(2, "0");
+                            const dateStr = `${year}-${month}-${day}`;
+                            if (greekHolidays[year] && greekHolidays[year].includes(dateStr)) {
+                                dayElem.classList.add("holiday");
+                            }
+                        },
+                        onChange: function(selectedDates, dateStr, instance) {
+                            calculateDays(instance.element, index);
+                        }
+                    });
                 }
             });
-
-            flatpickr(`#toDate${index}`, {
-                dateFormat: "d-m-Y",
-                locale: "el",
-                disable: [],
-                onDayCreate: function(dObj, dStr, fp, dayElem) {
-                    const date = dayElem.dateObj;
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, "0");
-                    const day = String(date.getDate()).padStart(2, "0");
-                    const dateStr = `${year}-${month}-${day}`;
-                    if (greekHolidays[year] && greekHolidays[year].includes(dateStr)) {
-                        dayElem.classList.add("holiday");
-                    }
-                },
-                onChange: function(selectedDates, dateStr, instance) {
-                    calculateDays(instance.element, index);
-                }
-            });
         }
-    });
-}
+
         function printLeaves() {
-    generateReport(); // Ενημερώνει την αναφορά
-    const report = document.getElementById("leaveReport");
-    report.style.display = "block"; // Εμφανίζουμε την αναφορά
-    report.classList.add("print-report"); // Προσθέτουμε κλάση για το print
-    window.print();
-    report.classList.remove("print-report"); // Αφαιρούμε μετά την εκτύπωση
-}
+            generateReport();
+            const report = document.getElementById("leaveReport");
+            report.style.display = "block";
+            report.classList.add("print-report");
+            window.print();
+            report.classList.remove("print-report");
+        }
 
         function generateReport() {
             let totalDays = 0, regularDays = 0, sickDays = 0, parentalDays = 0, parentalHours = 0, educationalDays = 0, specialDays = 0, bloodDonationDays = 0, dayOffDays = 0, otherDays = 0;
