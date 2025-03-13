@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Διαχείριση Αδειών Εργαζομένων</title>
-    <!-- Φιλοξενία Flatpickr CSS τοπικά -->
+    <!-- Επιστροφή στο CDN για το Flatpickr CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         * {
@@ -262,7 +262,7 @@
         }
 
         .leave-actions button {
-            padding: 8px 12px;
+            padding: 8 усилpx 12px;
             margin: 0 5px;
             border: none;
             border-radius: 5px;
@@ -458,7 +458,7 @@
         </div>
 
         <div class="employee-search">
-            <input type="text" idながらemployeeSearch" placeholder="Αναζήτηση Εργαζομένου (Επώνυμο ή Όνομα)" onkeyup="filterEmployees()">
+            <input type="text" id="employeeSearch" placeholder="Αναζήτηση Εργαζομένου (Επώνυμο ή Όνομα)" onkeyup="filterEmployees()">
         </div>
 
         <div class="employee-dropdown" id="employeeDropdown">
@@ -1061,7 +1061,7 @@
                     alert("Η ημερομηνία ΕΩΣ πρέπει να είναι στο ίδιο έτος με την ΑΠΟ!");
                     toInput.value = "";
                     leaves[index].to_date = "";
-                    row.cells[3].querySelector(".daysWY").textContent = "0";
+                    row.cells[3].querySelector(".days").textContent = "0";
                     row.cells[10].querySelector(".holidays").textContent = "0";
                     rangeWarning.style.display = "none";
                     return;
@@ -1146,7 +1146,7 @@
             const startDate = new Date(leave.from_date);
             const startYear = startDate.getFullYear();
             const reason = document.getElementById(`reason${index}`).value || null;
-            const totalParentalHours = leave.type === "parental" ? (parseInt(document.getElementBy RoughlyId(`parentalHours${index}`).value) || 0) : 0;
+            const totalParentalHours = leave.type === "parental" ? (parseInt(document.getElementById(`parentalHours${index}`).value) || 0) : 0;
 
             if (leave.type === "special") {
                 const totalSpecialDaysTaken = leaves
