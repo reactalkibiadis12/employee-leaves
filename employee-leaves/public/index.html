@@ -198,6 +198,13 @@
             gap: 10px;
         }
 
+        .form-container .children-section select, .edit-form .children-section select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
         #differentLevels, #editDifferentLevels {
             display: none;
         }
@@ -254,7 +261,7 @@
         }
 
         .leave-actions button:first-child:hover {
-            background-color: #27ae60;
+            background-color: #27 |ae60;
         }
 
         .leave-actions button:last-child {
@@ -372,7 +379,13 @@
             <input type="email" id="email" placeholder="Email"><br>
             <div class="children-section">
                 <input type="number" id="numberOfChildren" placeholder="Αριθμός Παιδιών" min="0" oninput="toggleDifferentLevels()">
-                <label><input type="checkbox" id="differentLevels"> Διαφορετικές Εκπαιδευτικές Βαθμίδες</label>
+                <div id="differentLevels">
+                    <label>Διαφορετικές Εκπαιδευτικές Βαθμίδες:</label>
+                    <select id="differentLevelsSelect">
+                        <option value="false">ΟΧΙ</option>
+                        <option value="true">ΝΑΙ</option>
+                    </select>
+                </div>
             </div>
             <button onclick="addEmployee()">Προσθήκη</button>
         </div>
@@ -399,7 +412,13 @@
             <input type="email" id="editEmail" placeholder="Email"><br>
             <div class="children-section">
                 <input type="number" id="editNumberOfChildren" placeholder="Αριθμός Παιδιών" min="0" oninput="toggleEditDifferentLevels()">
-                <label><input type="checkbox" id="editDifferentLevels"> Διαφορετικές Εκπαιδευτικές Βαθμίδες</label>
+                <div id="editDifferentLevels">
+                    <label>Διαφορετικές Εκπαιδευτικές Βαθμίδες:</label>
+                    <select id="editDifferentLevelsSelect">
+                        <option value="false">ΟΧΙ</option>
+                        <option value="true">ΝΑΙ</option>
+                    </select>
+                </div>
             </div>
             <button onclick="saveEdit()">Αποθήκευση</button>
             <button onclick="cancelEdit()">Ακύρωση</button>
@@ -546,15 +565,19 @@
         function toggleDifferentLevels() {
             const numChildren = parseInt(document.getElementById("numberOfChildren").value) || 0;
             const differentLevels = document.getElementById("differentLevels");
-            differentLevels.parentElement.style.display = numChildren > 1 ? "block" : "none";
-            if (numChildren <= 1) differentLevels.checked = false;
+            differentLevels.style.display = numChildren >= 2 ? "block" : "none";
+            if (numChildren < 2) {
+                document.getElementById("differentLevelsSelect").value = "false";
+            }
         }
 
         function toggleEditDifferentLevels() {
             const numChildren = parseInt(document.getElementById("editNumberOfChildren").value) || 0;
             const differentLevels = document.getElementById("editDifferentLevels");
-            differentLevels.parentElement.style.display = numChildren > 1 ? "block" : "none";
-            if (numChildren <= 1) differentLevels.checked = false;
+            differentLevels.style.display = numChildren >= 2 ? "block" : "none";
+            if (numChildren < 2) {
+                document.getElementById("editDifferentLevelsSelect").value = "false";
+            }
         }
 
         async function loadEmployees() {
@@ -593,7 +616,7 @@
             const afm = document.getElementById("afm").value;
             const email = document.getElementById("email").value;
             const numberOfChildren = parseInt(document.getElementById("numberOfChildren").value) || 0;
-            const differentLevels = document.getElementById("differentLevels").checked && numberOfChildren > 1;
+            const differentLevels = document.getElementById("differentLevelsSelect").value === "true";
 
             if (surname && name && afm && email) {
                 const { error } = await supabase.from("employees").insert({
@@ -618,7 +641,7 @@
                 document.getElementById("afm").value = "";
                 document.getElementById("email").value = "";
                 document.getElementById("numberOfChildren").value = "";
-                document.getElementById("differentLevels").checked = false;
+                document.getElementById("differentLevelsSelect").value = "false";
                 toggleDifferentLevels();
                 toggleForm();
             } else {
@@ -674,7 +697,7 @@
             document.getElementById("editAfm").value = data.afm;
             document.getElementById("editEmail").value = data.email;
             document.getElementById("editNumberOfChildren").value = data.number_of_children || 0;
-            document.getElementById("editDifferentLevels").checked = data.different_educational_levels;
+            document.getElementById("editDifferentLevelsSelect").value = data.different_educational_levels ? "true" : "false";
             toggleEditDifferentLevels();
             document.getElementById("editForm").style.display = "block";
             document.getElementById("employeeDropdown").style.display = "none";
@@ -686,7 +709,7 @@
             const afm = document.getElementById("editAfm").value;
             const email = document.getElementById("editEmail").value;
             const numberOfChildren = parseInt(document.getElementById("editNumberOfChildren").value) || 0;
-            const differentLevels = document.getElementById("editDifferentLevels").checked && numberOfChildren > 1;
+            const differentLevels = document.getElementById("editDifferentLevelsSelect").value === "true";
 
             if (surname && name && afm && email) {
                 const { error } = await supabase
