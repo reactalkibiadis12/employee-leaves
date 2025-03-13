@@ -516,7 +516,7 @@
             <table id="leaveTable">
                 <thead>
                     <tr>
-                        <th>Α/Α</th><th>ΑΠΟ</th><th>ΕΩΣ</th><th>ΜΕΡΕΣ</th><th>ΚΑΝΟΝΙΚΗ</th><th>ΑΝΑΡ/ΚΗ</th><th>ΓΟΝΙΚΗ</th><th>ΕΚΠ/ΚΗ</th><th>Υ.Δ</th><th>ΑΙΜΟΔΟΣΙΑ</th><th>ΑΡΓΙΕΣ</th><th>ΡΕΠΟ</th><th>ΑΛΛΗ</th><th>ΑΙΤΙΟ                <th>ΑΙΤΙΟΛΟΓΙΑ</th><th>ΕΝΕΡΓΕΙΕΣ</th><th>ΥΠΑΛΛΗΛΟΣ</th><th>ΤΜΗΜΑΤΑΡΧΗΣ</th><th>ΠΡΟΪΣΤΑΜΕΝΟΣ</th>
+                        <th>Α/Α</th><th>ΑΠΟ</th><th>ΕΩΣ</th><th>ΜΕΡΕΣ</th><th>ΚΑΝΟΝΙΚΗ</th><th>ΑΝΑΡ/ΚΗ</th><th>ΓΟΝΙΚΗ</th><th>ΕΚΠ/ΚΗ</th><th>Υ.Δ</th><th>ΑΙΜΟΔΟΣΙΑ</th><th>ΑΡΓΙΕΣ</th><th>ΡΕΠΟ</th><th>ΑΛΛΗ</th><th>ΑΙΤΙΟΛΟΓΙΑ</th><th>ΕΝΕΡΓΕΙΕΣ</th><th>ΥΠΑΛΛΗΛΟΣ</th><th>ΤΜΗΜΑΤΑΡΧΗΣ</th><th>ΠΡΟΪΣΤΑΜΕΝΟΣ</th>
                     </tr>
                 </thead>
                 <tbody id="leaveTableBody"></tbody>
@@ -1333,7 +1333,6 @@ function renderLeaveTable() {
             <td class="leave-actions">
                 ${!leave.saved ? `<button class="cancel-btn" onclick="cancelLeaveRow(${index})">X</button><button onclick="saveLeave(${index})">Αποθήκευση</button>` : `<button onclick="deleteLeave('${leave.id}')">Διαγραφή</button>`}
             </td>
-            <td></td>
             <td></td>
             <td></td>
             <td><img src="/signature.jpg" alt="Υπογραφή Προϊσταμένου" style="max-width: 100px; height: auto;"></td>
