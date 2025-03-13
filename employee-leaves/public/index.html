@@ -1293,7 +1293,7 @@
             }
         }
 
- function renderLeaveTable() {
+function renderLeaveTable() {
     const tbody = document.getElementById("leaveTableBody");
     tbody.innerHTML = "";
     const filteredLeaves = leaves.filter(leave => new Date(leave.from_date).getFullYear() === selectedYear);
@@ -1333,7 +1333,9 @@
             <td class="leave-actions">
                 ${!leave.saved ? `<button class="cancel-btn" onclick="cancelLeaveRow(${index})">X</button><button onclick="saveLeave(${index})">Αποθήκευση</button>` : `<button onclick="deleteLeave('${leave.id}')">Διαγραφή</button>`}
             </td>
-            <td></td><td></td><td></td>
+            <td></td>
+            <td></td>
+            <td><img src="/signature.jpg" alt="Υπογραφή Προϊσταμένου" style="max-width: 100px; height: auto;"></td>
         `;
         tbody.appendChild(row);
 
@@ -1380,7 +1382,6 @@
         }
     });
 }
-
         function printLeaves() {
             window.print();
         }
