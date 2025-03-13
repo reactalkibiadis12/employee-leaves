@@ -360,6 +360,14 @@
             padding: 5px;
         }
 
+        /* Στυλ για τις προειδοποιήσεις αργιών */
+        .holiday-warning {
+            color: red;
+            font-size: 12px;
+            display: none;
+            margin-top: 2px;
+        }
+
         @media print {
             body {
                 visibility: hidden;
@@ -921,8 +929,8 @@
             const row = document.createElement("tr");
             row.innerHTML = `
                 <td>${rowIndex + 1}</td>
-                <td><input type="date" onchange="calculateDays(this, ${rowIndex})"></td>
-                <td><input type="date" onchange="calculateDays(this, ${rowIndex})"></td>
+                <td><input type="date" onchange="calculateDays(this, ${rowIndex})"><span class="holiday-warning" id="fromHolidayWarning${rowIndex}"></span></td>
+                <td><input type="date" onchange="calculateDays(this, ${rowIndex})"><span class="holiday-warning" id="toHolidayWarning${rowIndex}"></span></td>
                 <td><span class="days">0</span></td>
                 <td><input type="radio" name="leave${rowIndex}" value="regular" onchange="updateLeave(${rowIndex})"></td>
                 <td><input type="radio" name="leave${rowIndex}" value="sick" onchange="updateLeave(${rowIndex})"></td>
@@ -952,8 +960,7 @@
                 blood_donation_days: 0,
                 special_days: 0,
                 reason: "",
-                saved: false,
-                parent_leave_id: null
+                saved: false
             });
         }
 
@@ -963,16 +970,38 @@
             const toInput = row.cells[2].querySelector("input");
             const from = fromInput.value;
             const to = toInput.value;
+            const fromWarning = document.getElementById(`fromHolidayWarning${index}`);
+            const toWarning = document.getElementById(`toHolidayWarning${index}`);
+
             if (from && to) {
                 const start = new Date(from);
                 const end = new Date(to);
+                const startYear = start.getFullYear();
+                const endYear = end.getFullYear();
+
+                // Περιορισμός: Το "ΕΩΣ" πρέπει να είναι στο ίδιο έτος με το "ΑΠΟ"
+                if (startYear !== endYear) {
+                    alert("Η ημερομηνία ΕΩΣ πρέπει να είναι στο ίδιο έτος με την ΑΠΟ!");
+                    toInput.value = "";
+                    leaves[index].to_date = "";
+                    row.cells[3].querySelector(".days").textContent = "0";
+                    row.cells[10].querySelector(".holidays").textContent = "0";
+                    fromWarning.style.display = "none";
+                    toWarning.style.display = "none";
+                    return;
+                }
+
                 if (end < start) {
                     alert("Η ημερομηνία ΕΩΣ πρέπει να είναι ίδια ή μεταγενέστερη από την ΑΠΟ!");
                     toInput.value = from;
+                    fromWarning.style.display = "none";
+                    toWarning.style.display = "none";
                     return;
                 }
+
                 const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
 
+                // Υπολογισμός αργιών για το έτος
                 const year = start.getFullYear();
                 const holidays = await getGreekHolidays(year);
                 let holidayCount = 0;
@@ -982,6 +1011,14 @@
                     if (holidays.includes(dateStr)) holidayCount++;
                     current.setDate(current.getDate() + 1);
                 }
+
+                // Ελέγχουμε αν η "ΑΠΟ" ή η "ΕΩΣ" ημερομηνία είναι αργία
+                const fromIsHoliday = holidays.includes(from);
+                const toIsHoliday = holidays.includes(to);
+                fromWarning.textContent = fromIsHoliday ? "Αργία" : "";
+                fromWarning.style.display = fromIsHoliday ? "block" : "none";
+                toWarning.textContent = toIsHoliday ? "Αργία" : "";
+                toWarning.style.display = toIsHoliday ? "block" : "none";
 
                 row.cells[3].querySelector(".days").textContent = days;
                 row.cells[10].querySelector(".holidays").textContent = holidayCount;
@@ -1005,6 +1042,9 @@
                     bloodDonationInput.checked = false;
                     leaves[index].type = "";
                 }
+            } else {
+                fromWarning.style.display = "none";
+                toWarning.style.display = "none";
             }
         }
 
@@ -1033,191 +1073,43 @@
             }
 
             const startDate = new Date(leave.from_date);
-            const endDate = new Date(leave.to_date);
             const startYear = startDate.getFullYear();
-            const endYear = endDate.getFullYear();
             const reason = document.getElementById(`reason${index}`).value || null;
-            let totalParentalHours = leave.type === "parental" ? (parseInt(document.getElementById(`parentalHours${index}`).value) || 0) : 0;
+            const totalParentalHours = leave.type === "parental" ? (parseInt(document.getElementById(`parentalHours${index}`).value) || 0) : 0;
 
-            if (startYear !== endYear) {
-                const splitLeaves = [];
-                let currentDate = new Date(startDate);
-                let firstLeaveId = null;
-
-                while (currentDate <= endDate) {
-                    const currentYear = currentDate.getFullYear();
-                    const yearEnd = new Date(currentYear, 11, 31);
-                    const segmentEnd = endDate > yearEnd ? yearEnd : endDate;
-                    const daysInSegment = Math.ceil((segmentEnd - currentDate) / (1000 * 60 * 60 * 24)) + 1;
-
-                    let parentalHoursInSegment = 0;
-                    if (leave.type === "parental" && totalParentalHours > 0) {
-                        const totalDays = leave.days;
-                        parentalHoursInSegment = Math.round((daysInSegment / totalDays) * totalParentalHours);
-                        totalParentalHours -= parentalHoursInSegment;
-                    }
-
-                    const holidays = await getGreekHolidays(currentYear);
-                    let holidayCount = 0;
-                    let tempDate = new Date(currentDate);
-                    while (tempDate <= segmentEnd) {
-                        if (holidays.includes(tempDate.toISOString().split('T')[0])) holidayCount++;
-                        tempDate.setDate(tempDate.getDate() + 1);
-                    }
-
-                    const leaveData = {
-                        employee_id: selectedEmployee.id,
-                        from_date: currentDate.toISOString().split('T')[0],
-                        to_date: segmentEnd.toISOString().split('T')[0],
-                        days: daysInSegment,
-                        holidays: holidayCount,
-                        regular: leave.type === "regular",
-                        sick: leave.type === "sick",
-                        parental: leave.type === "parental",
-                        educational: leave.type === "educational",
-                        special: leave.type === "special",
-                        blood_donation: leave.type === "blood_donation",
-                        day_off: leave.type === "day_off",
-                        other: leave.type === "other",
-                        parental_hours: parentalHoursInSegment,
-                        blood_donation_days: leave.type === "blood_donation" ? daysInSegment : 0,
-                        special_days: leave.type === "special" ? daysInSegment : 0,
-                        reason: reason,
-                        parent_leave_id: null
-                    };
-
-                    splitLeaves.push(leaveData);
-                    currentDate = new Date(segmentEnd);
-                    currentDate.setDate(currentDate.getDate() + 1);
-                }
-
-                const insertedLeaves = [];
-                for (let i = 0; i < splitLeaves.length; i++) {
-                    if (i === 0) {
-                        const { data, error } = await supabase.from("leaves").insert(splitLeaves[i]).select();
-                        if (error) return console.error("Error saving first split leave:", error);
-                        firstLeaveId = data[0].id;
-                        insertedLeaves.push({ ...data[0], saved: true });
-                    } else {
-                        splitLeaves[i].parent_leave_id = firstLeaveId;
-                        const { data, error } = await supabase.from("leaves").insert(splitLeaves[i]).select();
-                        if (error) return console.error(`Error saving split leave ${i}:`, error);
-                        insertedLeaves.push({ ...data[0], saved: true });
-                    }
-                }
-
-                await supabase.from("leaves").update({ parent_leave_id: firstLeaveId }).eq("id", firstLeaveId);
-                leaves.splice(index, 1, ...insertedLeaves);
-            } else {
-                const holidays = await getGreekHolidays(startYear);
-                let currentDate = new Date(startDate);
-                const splitLeaves = [];
-                let segmentStart = new Date(startDate);
-
-                while (currentDate <= endDate) {
-                    const dateStr = currentDate.toISOString().split('T')[0];
-                    if (holidays.includes(dateStr) && currentDate > segmentStart) {
-                        const daysInSegment = Math.ceil((new Date(currentDate.getTime() - 24 * 60 * 60 * 1000) - segmentStart) / (1000 * 60 * 60 * 24)) + 1;
-                        splitLeaves.push({
-                            employee_id: selectedEmployee.id,
-                            from_date: segmentStart.toISOString().split('T')[0],
-                            to_date: new Date(currentDate.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                            days: daysInSegment,
-                            holidays: 0,
-                            regular: leave.type === "regular",
-                            sick: leave.type === "sick",
-                            parental: leave.type === "parental",
-                            educational: leave.type === "educational",
-                            special: leave.type === "special",
-                            blood_donation: leave.type === "blood_donation",
-                            day_off: leave.type === "day_off",
-                            other: leave.type === "other",
-                            parental_hours: totalParentalHours > 0 ? Math.round((daysInSegment / leave.days) * totalParentalHours) : 0,
-                            blood_donation_days: leave.type === "blood_donation" ? daysInSegment : 0,
-                            special_days: leave.type === "special" ? daysInSegment : 0,
-                            reason: reason,
-                            parent_leave_id: null
-                        });
-                        totalParentalHours -= splitLeaves[splitLeaves.length - 1].parental_hours;
-                        segmentStart = new Date(currentDate);
-                    }
-                    currentDate.setDate(currentDate.getDate() + 1);
-                }
-
-                const finalDays = Math.ceil((endDate - segmentStart) / (1000 * 60 * 60 * 24)) + 1;
-                if (finalDays > 0) {
-                    const finalHolidays = leave.holidays - splitLeaves.reduce((sum, l) => sum + l.holidays, 0);
-                    splitLeaves.push({
-                        employee_id: selectedEmployee.id,
-                        from_date: segmentStart.toISOString().split('T')[0],
-                        to_date: endDate.toISOString().split('T')[0],
-                        days: finalDays,
-                        holidays: finalHolidays,
-                        regular: leave.type === "regular",
-                        sick: leave.type === "sick",
-                        parental: leave.type === "parental",
-                        educational: leave.type === "educational",
-                        special: leave.type === "special",
-                        blood_donation: leave.type === "blood_donation",
-                        day_off: leave.type === "day_off",
-                        other: leave.type === "other",
-                        parental_hours: totalParentalHours,
-                        blood_donation_days: leave.type === "blood_donation" ? finalDays : 0,
-                        special_days: leave.type === "special" ? finalDays : 0,
-                        reason: reason,
-                        parent_leave_id: null
-                    });
-                }
-
-                if (splitLeaves.length > 1) {
-                    const insertedLeaves = [];
-                    let firstLeaveId = null;
-                    for (let i = 0; i < splitLeaves.length; i++) {
-                        const { data, error } = await supabase.from("leaves").insert(splitLeaves[i]).select();
-                        if (error) return console.error("Error saving split leave:", error);
-                        if (i === 0) firstLeaveId = data[0].id;
-                        splitLeaves[i].parent_leave_id = firstLeaveId;
-                        insertedLeaves.push({ ...data[0], saved: true });
-                    }
-                    await supabase.from("leaves").update({ parent_leave_id: firstLeaveId }).eq("id", firstLeaveId);
-                    leaves.splice(index, 1, ...insertedLeaves);
-                } else {
-                    if (leave.type === "special") {
-                        const totalSpecialDaysTaken = leaves
-                            .filter(l => l.saved && l.special && new Date(l.from_date).getFullYear() === startYear)
-                            .reduce((sum, l) => sum + l.days, 0);
-                        if (totalSpecialDaysTaken + leave.days > TOTAL_SPECIAL_DAYS) {
-                            alert(`Ο εργαζόμενος έχει ξεπεράσει το όριο των ${TOTAL_SPECIAL_DAYS} ημερών Υ.Δ για το ${startYear}!`);
-                            return;
-                        }
-                    }
-
-                    const leaveData = {
-                        employee_id: selectedEmployee.id,
-                        from_date: leave.from_date,
-                        to_date: leave.to_date,
-                        days: leave.days,
-                        holidays: leave.holidays,
-                        regular: leave.type === "regular",
-                        sick: leave.type === "sick",
-                        parental: leave.type === "parental",
-                        educational: leave.type === "educational",
-                        special: leave.type === "special",
-                        blood_donation: leave.type === "blood_donation",
-                        day_off: leave.type === "day_off",
-                        other: leave.type === "other",
-                        parental_hours: totalParentalHours,
-                        blood_donation_days: leave.type === "blood_donation" ? leave.days : 0,
-                        special_days: leave.type === "special" ? leave.days : 0,
-                        reason: reason,
-                        parent_leave_id: null
-                    };
-
-                    const { data, error } = await supabase.from("leaves").insert(leaveData).select();
-                    if (error) return console.error("Error saving leave:", error);
-                    leaves[index] = { ...data[0], saved: true };
+            if (leave.type === "special") {
+                const totalSpecialDaysTaken = leaves
+                    .filter(l => l.saved && l.special && new Date(l.from_date).getFullYear() === startYear)
+                    .reduce((sum, l) => sum + l.days, 0);
+                if (totalSpecialDaysTaken + leave.days > TOTAL_SPECIAL_DAYS) {
+                    alert(`Ο εργαζόμενος έχει ξεπεράσει το όριο των ${TOTAL_SPECIAL_DAYS} ημερών Υ.Δ για το ${startYear}!`);
+                    return;
                 }
             }
+
+            const leaveData = {
+                employee_id: selectedEmployee.id,
+                from_date: leave.from_date,
+                to_date: leave.to_date,
+                days: leave.days,
+                holidays: leave.holidays,
+                regular: leave.type === "regular",
+                sick: leave.type === "sick",
+                parental: leave.type === "parental",
+                educational: leave.type === "educational",
+                special: leave.type === "special",
+                blood_donation: leave.type === "blood_donation",
+                day_off: leave.type === "day_off",
+                other: leave.type === "other",
+                parental_hours: totalParentalHours,
+                blood_donation_days: leave.type === "blood_donation" ? leave.days : 0,
+                special_days: leave.type === "special" ? leave.days : 0,
+                reason: reason
+            };
+
+            const { data, error } = await supabase.from("leaves").insert(leaveData).select();
+            if (error) return console.error("Error saving leave:", error);
+            leaves[index] = { ...data[0], saved: true };
 
             renderLeaveTable();
             await updateTotals();
@@ -1231,16 +1123,15 @@
                 return;
             }
             if (confirm("Είστε σίγουροι ότι θέλετε να διαγράψετε αυτήν την άδεια;")) {
-                const parentId = leave.parent_leave_id || leave.id;
                 const { error } = await supabase
                     .from("leaves")
                     .delete()
-                    .or(`id.eq.${parentId},parent_leave_id.eq.${parentId}`);
+                    .eq("id", leave.id);
                 if (error) {
-                    console.error("Error deleting leave group:", error);
+                    console.error("Error deleting leave:", error);
                     return;
                 }
-                leaves = leaves.filter(l => l.id !== parentId && l.parent_leave_id !== parentId);
+                leaves.splice(index, 1);
                 renderLeaveTable();
                 await updateTotals();
             }
@@ -1302,13 +1193,20 @@
             const tbody = document.getElementById("leaveTableBody");
             tbody.innerHTML = "";
             const filteredLeaves = leaves.filter(leave => new Date(leave.from_date).getFullYear() === selectedYear);
-            filteredLeaves.forEach((leave, index) => {
+            filteredLeaves.forEach(async (leave, index) => {
                 const row = document.createElement("tr");
                 const isCurrentYear = selectedYear === currentYear;
+
+                // Υπολογισμός αργιών για προειδοποίηση
+                const year = new Date(leave.from_date).getFullYear();
+                const holidays = await getGreekHolidays(year);
+                const fromIsHoliday = holidays.includes(leave.from_date);
+                const toIsHoliday = holidays.includes(leave.to_date);
+
                 row.innerHTML = `
                     <td>${index + 1}</td>
-                    <td><input type="date" value="${leave.from_date}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"></td>
-                    <td><input type="date" value="${leave.to_date}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"></td>
+                    <td><input type="date" value="${leave.from_date}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"><span class="holiday-warning" id="fromHolidayWarning${index}">${fromIsHoliday ? "Αργία" : ""}</span></td>
+                    <td><input type="date" value="${leave.to_date}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"><span class="holiday-warning" id="toHolidayWarning${index}">${toIsHoliday ? "Αργία" : ""}</span></td>
                     <td><span class="days">${leave.days}</span></td>
                     <td><input type="radio" name="leave${index}" value="regular" ${leave.regular ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
                     <td><input type="radio" name="leave${index}" value="sick" ${leave.sick ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
@@ -1327,6 +1225,10 @@
                     <td></td><td></td><td></td>
                 `;
                 tbody.appendChild(row);
+
+                // Εμφάνιση των προειδοποιήσεων αργιών
+                document.getElementById(`fromHolidayWarning${index}`).style.display = fromIsHoliday ? "block" : "none";
+                document.getElementById(`toHolidayWarning${index}`).style.display = toIsHoliday ? "block" : "none";
             });
         }
 
