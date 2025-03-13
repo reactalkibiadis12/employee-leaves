@@ -361,10 +361,32 @@
         }
 
         @media print {
-            body * { visibility: hidden; }
-            .print-header, .print-header *, #leaveTable, #leaveTable * { visibility: visible; }
-            .print-header { position: absolute; top: 0; left: 0; width: 100%; }
-            #leaveTable { position: absolute; top: 100px; left: 0; width: 100%; }
+            body {
+                visibility: hidden;
+            }
+            .print-header, .print-header *, #leaveTable, #leaveTable * {
+                visibility: visible;
+            }
+            .print-header {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+            }
+            #leaveTable {
+                position: absolute;
+                top: 100px;
+                left: 0;
+                width: 100%;
+            }
+            @page {
+                size: landscape; /* Ορίζει το orientation σε landscape */
+            }
+            body {
+                transform: scale(0.8); /* Κλίμακα 80% */
+                transform-origin: 0 0; /* Ξεκινά την κλίμακα από την πάνω αριστερή γωνία */
+                width: 125%; /* Προσαρμογή πλάτους για να ταιριάζει η κλίμακα */
+            }
         }
     </style>
 </head>
