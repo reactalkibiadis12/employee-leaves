@@ -1038,6 +1038,7 @@
         function cancelLeaveRow(index) {
             leaves.splice(index, 1);
             renderLeaveTable();
+            generateReport(); // Ενημερώνουμε την αναφορά μετά την ακύρωση
         }
 
         async function calculateDays(input, index) {
@@ -1197,6 +1198,7 @@
             leaves[index] = { ...data[0], saved: true };
             renderLeaveTable();
             await updateTotals();
+            generateReport(); // Ενημερώνουμε την αναφορά μετά την αποθήκευση
         }
 
         async function deleteLeave(leaveId) {
@@ -1239,9 +1241,23 @@
                 }
 
                 console.log("Leave deleted successfully from database:", leaveId);
-                if (leaveIndex !== -1) leaves.splice(leaveIndex, 1);
+                if (leaveIndex !== -1) {
+                    leaves.splice(leaveIndex, 1);
+                } else {
+                    // Αν η άδεια δεν ήταν ήδη στη λίστα leaves, φορτώνουμε ξανά τις άδειες
+                    const { data: updatedLeaves, error: leavesError } = await supabase
+                        .from("leaves")
+                        .select("*")
+                        .eq("employee_id", selectedEmployee.id);
+                    if (leavesError) {
+                        console.error("Error reloading leaves:", leavesError);
+                    } else {
+                        leaves = updatedLeaves.map(leave => ({ ...leave, saved: true }));
+                    }
+                }
                 renderLeaveTable();
                 await updateTotals();
+                generateReport(); // Ενημερώνουμε την αναφορά μετά τη διαγραφή
             } catch (err) {
                 console.error("Unexpected error during deletion:", err);
                 alert("Προέκυψε απρόσμενο σφάλμα κατά τη διαγραφή!");
