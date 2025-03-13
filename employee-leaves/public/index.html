@@ -356,7 +356,7 @@
             margin-left: 5px;
         }
 
-        .reason-input {
+        .reason-input, .protocol-input {
             width: 100%;
             padding: 5px;
         }
@@ -402,7 +402,7 @@
                 visibility: visible;
             }
             h1, .dropdown, #addEmployeeForm, .employee-search, .employee-dropdown, .edit-form, .logout-btn {
-                display: none !important; /* Αποκρύπτουμε αυτά τα στοιχεία στην εκτύπωση */
+                display: none !important;
             }
             #employeeDetails {
                 position: relative;
@@ -428,7 +428,7 @@
                 page-break-before: auto;
             }
             .modern-button {
-                display: none; /* Αποκρύπτουμε τα κουμπιά στην εκτύπωση */
+                display: none;
             }
             @page {
                 size: landscape;
@@ -532,7 +532,24 @@
             <table id="leaveTable">
                 <thead>
                     <tr>
-                        <th>Α/Α</th><th>ΑΠΟ</th><th>ΕΩΣ</th><th>ΜΕΡΕΣ</th><th>ΚΑΝΟΝΙΚΗ</th><th>ΑΝΑΡ/ΚΗ</th><th>ΓΟΝΙΚΗ</th><th>ΕΚΠ/ΚΗ</th><th>Υ.Δ</th><th>ΑΙΜΟΔΟΣΙΑ</th><th>ΡΕΠΟ</th><th>ΑΛΛΗ</th><th>ΑΙΤΙΟΛΟΓΙΑ</th><th>ΕΝΕΡΓΕΙΕΣ</th><th>ΥΠΑΛΛΗΛΟΣ</th><th>ΤΜΗΜΑΤΑΡΧΗΣ</th><th>ΠΡΟΪΣΤΑΜΕΝΟΣ</th>
+                        <th>Α/Α</th>
+                        <th>ΑΠΟ</th>
+                        <th>ΕΩΣ</th>
+                        <th>ΜΕΡΕΣ</th>
+                        <th>ΑΡ. ΠΡΩΤ.</th> <!-- Νέα στήλη -->
+                        <th>ΚΑΝΟΝΙΚΗ</th>
+                        <th>ΑΝΑΡ/ΚΗ</th>
+                        <th>ΓΟΝΙΚΗ</th>
+                        <th>ΕΚΠ/ΚΗ</th>
+                        <th>Υ.Δ</th>
+                        <th>ΑΙΜΟΔΟΣΙΑ</th>
+                        <th>ΡΕΠΟ</th>
+                        <th>ΑΛΛΗ</th>
+                        <th>ΑΙΤΙΟΛΟΓΙΑ</th>
+                        <th>ΕΝΕΡΓΕΙΕΣ</th>
+                        <th>ΥΠΑΛΛΗΛΟΣ</th>
+                        <th>ΤΜΗΜΑΤΑΡΧΗΣ</th>
+                        <th>ΠΡΟΪΣΤΑΜΕΝΟΣ</th>
                     </tr>
                 </thead>
                 <tbody id="leaveTableBody"></tbody>
@@ -976,6 +993,7 @@
                 <td><input type="text" class="flatpickr" id="fromDate${rowIndex}" onchange="calculateDays(this, ${rowIndex})"><span class="holiday-warning" id="rangeHolidayWarning${rowIndex}"></span></td>
                 <td><input type="text" class="flatpickr" id="toDate${rowIndex}" onchange="calculateDays(this, ${rowIndex})"></td>
                 <td><span class="days">0</span></td>
+                <td><input type="text" class="protocol-input" id="protocolNumber${rowIndex}" placeholder="Αρ. Πρωτ. (προαιρετικό)"></td>
                 <td><input type="radio" name="leave${rowIndex}" value="regular" onchange="updateLeave(${rowIndex})"></td>
                 <td><input type="radio" name="leave${rowIndex}" value="sick" onchange="updateLeave(${rowIndex})"></td>
                 <td><input type="radio" name="leave${rowIndex}" value="parental" onchange="updateLeave(${rowIndex})"><input type="number" class="parental-hours-input" id="parentalHours${rowIndex}" placeholder="Ώρες" min="0"></td>
@@ -997,6 +1015,7 @@
                 from_date: "",
                 to_date: "",
                 days: 0,
+                protocol_number: "", // Νέο πεδίο
                 type: "",
                 parental_hours: 0,
                 blood_donation_days: 0,
@@ -1103,9 +1122,9 @@
                 leaves[index].to_date = `${toYear}-${toMonth.toString().padStart(2, "0")}-${toDay.toString().padStart(2, "0")}`;
                 leaves[index].days = days;
 
-                const parentalInput = row.cells[6].querySelector("input[type='radio']");
-                const bloodDonationInput = row.cells[9].querySelector("input[type='radio']");
-                const specialInput = row.cells[8].querySelector("input[type='radio']");
+                const parentalInput = row.cells[7].querySelector("input[type='radio']");
+                const bloodDonationInput = row.cells[10].querySelector("input[type='radio']");
+                const specialInput = row.cells[9].querySelector("input[type='radio']");
 
                 parentalInput.disabled = days > 1;
                 if (days > 1 && parentalInput.checked) {
@@ -1126,7 +1145,7 @@
         function updateLeave(index) {
             const row = document.getElementById("leaveTableBody").rows[index];
             const selectedType = row.querySelector(`input[name="leave${index}"]:checked`);
-            const parentalHoursInput = row.cells[6].querySelector(".parental-hours-input");
+            const parentalHoursInput = row.cells[7].querySelector(".parental-hours-input");
 
             leaves[index].type = selectedType ? selectedType.value : "";
             parentalHoursInput.style.display = leaves[index].type === "parental" ? "inline-block" : "none";
@@ -1166,6 +1185,7 @@
                 return;
             }
 
+            const protocolNumber = document.getElementById(`protocolNumber${index}`).value || null; // Νέο πεδίο
             const reason = document.getElementById(`reason${index}`).value || null;
             const totalParentalHours = leave.type === "parental" ? (parseInt(document.getElementById(`parentalHours${index}`).value) || 0) : 0;
 
@@ -1184,6 +1204,7 @@
                 from_date: leave.from_date,
                 to_date: leave.to_date,
                 days: leave.days,
+                protocol_number: protocolNumber, // Νέο πεδίο
                 regular: leave.type === "regular",
                 sick: leave.type === "sick",
                 parental: leave.type === "parental",
@@ -1351,6 +1372,7 @@
                     <td><input type="text" class="flatpickr" id="fromDate${index}" value="${leave.from_date.split('-').reverse().join('/')}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"><span class="holiday-warning" id="rangeHolidayWarning${index}">${holidayCount > 0 ? "Το εύρος περιλαμβάνει αργίες" : ""}</span></td>
                     <td><input type="text" class="flatpickr" id="toDate${index}" value="${leave.to_date.split('-').reverse().join('/')}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"></td>
                     <td><span class="days">${leave.days}</span></td>
+                    <td><input type="text" class="protocol-input" id="protocolNumber${index}" value="${leave.protocol_number || ''}" placeholder="Αρ. Πρωτ. (προαιρετικό)" ${leave.saved ? 'disabled' : ''}></td>
                     <td><input type="radio" name="leave${index}" value="regular" ${leave.regular ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
                     <td><input type="radio" name="leave${index}" value="sick" ${leave.sick ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
                     <td><input type="radio" name="leave${index}" value="parental" ${leave.parental ? "checked" : ""} ${leave.saved ? 'disabled' : ''} ${leave.days > 1 ? 'disabled' : ''} onchange="updateLeave(${index})"><input type="number" class="parental-hours-input" id="parentalHours${index}" value="${leave.parental_hours || ''}" placeholder="Ώρες" min="0" ${leave.saved ? 'disabled' : ''} style="display: ${leave.parental ? 'inline-block' : 'none'};"></td>
@@ -1418,7 +1440,7 @@
             const report = document.getElementById("leaveReport");
             report.style.display = "block";
             window.print();
-            report.style.display = "none"; // Επαναφέρουμε την κατάσταση μετά την εκτύπωση
+            report.style.display = "none";
         }
 
         function generateReport() {
