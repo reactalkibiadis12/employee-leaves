@@ -1097,11 +1097,17 @@
     let toStr = toInput.value.split(" (")[0];
     const rangeWarning = document.getElementById(`rangeHolidayWarning${index}`);
 
+    console.log(`Input fromStr: ${fromStr}, toStr: ${toStr}`); // Debugging
+
     if (fromStr && toStr) {
         const [fromDay, fromMonth, fromYear] = fromStr.split("/").map(Number);
         const [toDay, toMonth, toYear] = toStr.split("/").map(Number);
-        const start = new Date(fromYear, fromMonth - 1, fromDay);
-        const end = new Date(toYear, toMonth - 1, toDay);
+
+        // Δημιουργία Date αντικειμένων με ώρα 12:00 για να αποφύγουμε offset προβλήματα
+        const start = new Date(fromYear, fromMonth - 1, fromDay, 12, 0, 0); // Μεσημέρι για σταθερότητα
+        const end = new Date(toYear, toMonth - 1, toDay, 12, 0, 0);
+
+        console.log(`Parsed start: ${start.toISOString()}, end: ${end.toISOString()}`); // Debugging
 
         if (toYear !== fromYear) {
             alert("Η ημερομηνία ΕΩΣ πρέπει να είναι στο ίδιο έτος με την ΑΠΟ!");
@@ -1132,9 +1138,8 @@
         let current = new Date(start);
         const daysOfWeek = ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"];
 
-        // Υπολογισμός μετρώντας από την αρχική έως την τελική ημέρα
         const oneDay = 24 * 60 * 60 * 1000; // Μια μέρα σε milliseconds
-        const diffDays = Math.round(Math.abs((end - start) / oneDay)) + 1; // Συνολικές ημέρες στο εύρος (συμπεριλαμβανομένων και των άκρων)
+        const diffDays = Math.round(Math.abs((end - start) / oneDay)) + 1; // Συνολικές ημέρες
         for (let i = 0; i < diffDays; i++) {
             const currentDate = new Date(start.getTime() + i * oneDay);
             const dateStr = currentDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
