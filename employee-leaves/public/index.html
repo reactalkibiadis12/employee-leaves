@@ -1090,96 +1090,100 @@
         }
 
         async function calculateDays(input, index) {
-            const row = input.parentElement.parentElement;
-            const fromInput = row.cells[1].querySelector("input");
-            const toInput = row.cells[2].querySelector("input");
-            const fromStr = fromInput.value;
-            const toStr = toInput.value;
-            const rangeWarning = document.getElementById(`rangeHolidayWarning${index}`);
+    const row = input.parentElement.parentElement;
+    const fromInput = row.cells[1].querySelector("input");
+    const toInput = row.cells[2].querySelector("input");
+    let fromStr = fromInput.value;
+    let toStr = toInput.value;
+    const rangeWarning = document.getElementById(`rangeHolidayWarning${index}`);
 
-            if (fromStr && toStr) {
-                const [fromDay, fromMonth, fromYear] = fromStr.split("/").map(Number);
-                const [toDay, toMonth, toYear] = toStr.split("/").map(Number);
-                const start = new Date(fromYear, fromMonth - 1, fromDay);
-                const end = new Date(toYear, toMonth - 1, toDay);
+    // Αφαίρεση της ημέρας σε παρένθεση για καθαρό split
+    fromStr = fromStr.split(" (")[0]; // Παίρνουμε μόνο το "dd/mm/yyyy"
+    toStr = toStr.split(" (")[0];
 
-                if (toYear !== fromYear) {
-                    alert("Η ημερομηνία ΕΩΣ πρέπει να είναι στο ίδιο έτος με την ΑΠΟ!");
-                    toInput.value = "";
-                    leaves[index].to_date = "";
-                    row.cells[3].querySelector(".days").textContent = "0";
-                    rangeWarning.style.display = "none";
-                    return;
-                }
+    if (fromStr && toStr) {
+        const [fromDay, fromMonth, fromYear] = fromStr.split("/").map(Number);
+        const [toDay, toMonth, toYear] = toStr.split("/").map(Number);
+        const start = new Date(fromYear, fromMonth - 1, fromDay);
+        const end = new Date(toYear, toMonth - 1, toDay);
 
-                if (end < start) {
-                    alert("Η ημερομηνία ΕΩΣ πρέπει να είναι ίδια ή μεταγενέστερη από την ΑΠΟ!");
-                    toInput.value = fromStr;
-                    rangeWarning.style.display = "none";
-                    return;
-                }
-
-                const year = start.getFullYear();
-                if (!greekHolidays[year]) {
-                    greekHolidays[year] = await getGreekHolidays(year);
-                }
-                const holidays = greekHolidays[year];
-
-                let totalDays = 0;
-                let holidayCount = 0;
-                let weekendCount = 0;
-                let current = new Date(start);
-                const daysOfWeek = ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"];
-
-                while (current <= end) {
-                    const dateStr = current.toISOString().split('T')[0];
-                    const dayOfWeek = current.getDay();
-                    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-                    const isHoliday = holidays.includes(dateStr);
-
-                    if (!isHoliday && !isWeekend) {
-                        totalDays++;
-                    }
-                    if (isHoliday) holidayCount++;
-                    if (isWeekend) weekendCount++;
-
-                    current.setDate(current.getDate() + 1);
-                }
-
-                fromInput.value = `${fromStr} (${daysOfWeek[start.getDay()]})`;
-                toInput.value = `${toStr} (${daysOfWeek[end.getDay()]})`;
-
-                let warningText = "";
-                if (holidayCount > 0) warningText += "Το εύρος περιλαμβάνει αργίες";
-                if (weekendCount > 0) warningText += (warningText ? " & " : "") + "<span class='weekend'>Το εύρος περιλαμβάνει Σ/Κ</span>";
-
-                rangeWarning.innerHTML = warningText;
-                rangeWarning.style.display = warningText ? "block" : "none";
-
-                row.cells[3].querySelector(".days").textContent = totalDays;
-                leaves[index].from_date = `${fromYear}-${fromMonth.toString().padStart(2, "0")}-${fromDay.toString().padStart(2, "0")}`;
-                leaves[index].to_date = `${toYear}-${toMonth.toString().padStart(2, "0")}-${toDay.toString().padStart(2, "0")}`;
-                leaves[index].days = totalDays;
-
-                const parentalInput = row.cells[7].querySelector("input[type='radio']");
-                const bloodDonationInput = row.cells[10].querySelector("input[type='radio']");
-
-                parentalInput.disabled = totalDays > 1;
-                if (totalDays > 1 && parentalInput.checked) {
-                    parentalInput.checked = false;
-                    leaves[index].type = "";
-                }
-
-                bloodDonationInput.disabled = totalDays !== 2;
-                if (totalDays !== 2 && bloodDonationInput.checked) {
-                    bloodDonationInput.checked = false;
-                    leaves[index].type = "";
-                }
-            } else {
-                rangeWarning.style.display = "none";
-            }
+        if (toYear !== fromYear) {
+            alert("Η ημερομηνία ΕΩΣ πρέπει να είναι στο ίδιο έτος με την ΑΠΟ!");
+            toInput.value = "";
+            leaves[index].to_date = "";
+            row.cells[3].querySelector(".days").textContent = "0";
+            rangeWarning.style.display = "none";
+            return;
         }
 
+        if (end < start) {
+            alert("Η ημερομηνία ΕΩΣ πρέπει να είναι ίδια ή μεταγενέστερη από την ΑΠΟ!");
+            toInput.value = fromStr;
+            rangeWarning.style.display = "none";
+            return;
+        }
+
+        const year = start.getFullYear();
+        if (!greekHolidays[year]) {
+            greekHolidays[year] = await getGreekHolidays(year);
+        }
+        const holidays = greekHolidays[year];
+
+        let totalDays = 0;
+        let holidayCount = 0;
+        let weekendCount = 0;
+        let current = new Date(start);
+        const daysOfWeek = ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"];
+
+        while (current <= end) {
+            const dateStr = current.toISOString().split('T')[0];
+            const dayOfWeek = current.getDay();
+            const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+            const isHoliday = holidays.includes(dateStr);
+
+            if (!isHoliday && !isWeekend) {
+                totalDays++;
+            }
+            if (isHoliday) holidayCount++;
+            if (isWeekend) weekendCount++;
+
+            current.setDate(current.getDate() + 1);
+        }
+
+        // Ενημέρωση των πεδίων με την ημέρα
+        fromInput.value = `${fromStr} (${daysOfWeek[start.getDay()]})`;
+        toInput.value = `${toStr} (${daysOfWeek[end.getDay()]})`;
+
+        let warningText = "";
+        if (holidayCount > 0) warningText += "Το εύρος περιλαμβάνει αργίες";
+        if (weekendCount > 0) warningText += (warningText ? " & " : "") + "<span class='weekend'>Το εύρος περιλαμβάνει Σ/Κ</span>";
+
+        rangeWarning.innerHTML = warningText;
+        rangeWarning.style.display = warningText ? "block" : "none";
+
+        row.cells[3].querySelector(".days").textContent = totalDays;
+        leaves[index].from_date = `${fromYear}-${fromMonth.toString().padStart(2, "0")}-${fromDay.toString().padStart(2, "0")}`;
+        leaves[index].to_date = `${toYear}-${toMonth.toString().padStart(2, "0")}-${toDay.toString().padStart(2, "0")}`;
+        leaves[index].days = totalDays;
+
+        const parentalInput = row.cells[7].querySelector("input[type='radio']");
+        const bloodDonationInput = row.cells[10].querySelector("input[type='radio']");
+
+        parentalInput.disabled = totalDays > 1;
+        if (totalDays > 1 && parentalInput.checked) {
+            parentalInput.checked = false;
+            leaves[index].type = "";
+        }
+
+        bloodDonationInput.disabled = totalDays !== 2;
+        if (totalDays !== 2 && bloodDonationInput.checked) {
+            bloodDonationInput.checked = false;
+            leaves[index].type = "";
+        }
+    } else {
+        rangeWarning.style.display = "none";
+    }
+}
         function updateLeave(index) {
             const row = document.getElementById("leaveTableBody").rows[index];
             const selectedType = row.querySelector(`input[name="leave${index}"]:checked`);
