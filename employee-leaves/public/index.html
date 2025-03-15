@@ -1089,7 +1089,7 @@
             renderLeaveTable();
         }
 
-       async function calculateDays(input, index) {
+      async function calculateDays(input, index) {
     const row = input.parentElement.parentElement;
     const fromInput = row.cells[1].querySelector("input");
     const toInput = row.cells[2].querySelector("input");
@@ -1124,7 +1124,7 @@
             greekHolidays[year] = await getGreekHolidays(year);
         }
         const holidays = greekHolidays[year];
-        console.log(`Holidays for ${year}:`, holidays); // Debugging: Εμφάνιση αργιών
+        console.log(`Holidays for ${year}:`, holidays);
 
         let totalDays = 0;
         let holidayCount = 0;
@@ -1132,21 +1132,23 @@
         let current = new Date(start);
         const daysOfWeek = ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"];
 
-        while (current <= end) {
-            const dateStr = current.toISOString().split('T')[0]; // Μορφή "YYYY-MM-DD"
-            const dayOfWeek = current.getDay();
+        // Υπολογισμός μετρώντας από την αρχική έως την τελική ημέρα
+        const oneDay = 24 * 60 * 60 * 1000; // Μια μέρα σε milliseconds
+        const diffDays = Math.round(Math.abs((end - start) / oneDay)) + 1; // Συνολικές ημέρες στο εύρος (συμπεριλαμβανομένων και των άκρων)
+        for (let i = 0; i < diffDays; i++) {
+            const currentDate = new Date(start.getTime() + i * oneDay);
+            const dateStr = currentDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
+            const dayOfWeek = currentDate.getDay();
             const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
             const isHoliday = holidays.includes(dateStr);
 
-            console.log(`Checking ${dateStr}: isHoliday=${isHoliday}, isWeekend=${isWeekend}`); // Debugging
+            console.log(`Checking ${dateStr}: isHoliday=${isHoliday}, isWeekend=${isWeekend}`);
 
             if (!isHoliday && !isWeekend) {
                 totalDays++;
             }
             if (isHoliday) holidayCount++;
             if (isWeekend) weekendCount++;
-
-            current.setDate(current.getDate() + 1);
         }
 
         fromInput.value = `${fromStr} (${daysOfWeek[start.getDay()]})`;
