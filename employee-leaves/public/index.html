@@ -1089,17 +1089,13 @@
             renderLeaveTable();
         }
 
-        async function calculateDays(input, index) {
+       async function calculateDays(input, index) {
     const row = input.parentElement.parentElement;
     const fromInput = row.cells[1].querySelector("input");
     const toInput = row.cells[2].querySelector("input");
-    let fromStr = fromInput.value;
-    let toStr = toInput.value;
+    let fromStr = fromInput.value.split(" (")[0]; // Παίρνουμε μόνο το "dd/mm/yyyy"
+    let toStr = toInput.value.split(" (")[0];
     const rangeWarning = document.getElementById(`rangeHolidayWarning${index}`);
-
-    // Αφαίρεση της ημέρας σε παρένθεση για καθαρό split
-    fromStr = fromStr.split(" (")[0]; // Παίρνουμε μόνο το "dd/mm/yyyy"
-    toStr = toStr.split(" (")[0];
 
     if (fromStr && toStr) {
         const [fromDay, fromMonth, fromYear] = fromStr.split("/").map(Number);
@@ -1128,6 +1124,7 @@
             greekHolidays[year] = await getGreekHolidays(year);
         }
         const holidays = greekHolidays[year];
+        console.log(`Holidays for ${year}:`, holidays); // Debugging: Εμφάνιση αργιών
 
         let totalDays = 0;
         let holidayCount = 0;
@@ -1136,10 +1133,12 @@
         const daysOfWeek = ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"];
 
         while (current <= end) {
-            const dateStr = current.toISOString().split('T')[0];
+            const dateStr = current.toISOString().split('T')[0]; // Μορφή "YYYY-MM-DD"
             const dayOfWeek = current.getDay();
             const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
             const isHoliday = holidays.includes(dateStr);
+
+            console.log(`Checking ${dateStr}: isHoliday=${isHoliday}, isWeekend=${isWeekend}`); // Debugging
 
             if (!isHoliday && !isWeekend) {
                 totalDays++;
@@ -1150,13 +1149,12 @@
             current.setDate(current.getDate() + 1);
         }
 
-        // Ενημέρωση των πεδίων με την ημέρα
         fromInput.value = `${fromStr} (${daysOfWeek[start.getDay()]})`;
         toInput.value = `${toStr} (${daysOfWeek[end.getDay()]})`;
 
         let warningText = "";
-        if (holidayCount > 0) warningText += "Το εύρος περιλαμβάνει αργίες";
-        if (weekendCount > 0) warningText += (warningText ? " & " : "") + "<span class='weekend'>Το εύρος περιλαμβάνει Σ/Κ</span>";
+        if (holidayCount > 0) warningText += `Το εύρος περιλαμβάνει ${holidayCount} αργίες`;
+        if (weekendCount > 0) warningText += (warningText ? " & " : "") + `<span class='weekend'>Το εύρος περιλαμβάνει ${weekendCount} Σ/Κ</span>`;
 
         rangeWarning.innerHTML = warningText;
         rangeWarning.style.display = warningText ? "block" : "none";
