@@ -1089,7 +1089,7 @@
             renderLeaveTable();
         }
 
-      async function calculateDays(input, index) {
+ async function calculateDays(input, index) {
     const row = input.parentElement.parentElement;
     const fromInput = row.cells[1].querySelector("input");
     const toInput = row.cells[2].querySelector("input");
@@ -1103,7 +1103,6 @@
         const [fromDay, fromMonth, fromYear] = fromStr.split("/").map(Number);
         const [toDay, toMonth, toYear] = toStr.split("/").map(Number);
 
-        // Δημιουργία Date αντικειμένων με ώρα 12:00 για να αποφύγουμε offset προβλήματα
         const start = new Date(fromYear, fromMonth - 1, fromDay, 12, 0, 0); // Μεσημέρι για σταθερότητα
         const end = new Date(toYear, toMonth - 1, toDay, 12, 0, 0);
 
@@ -1134,17 +1133,28 @@
 
         let totalDays = 0;
         let holidayCount = 0;
-        let weekendCount = 0;
+        let weekendPairs = 0; // Μετράμε ζευγάρια Σάββατο-Κυριακή
         let current = new Date(start);
         const daysOfWeek = ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"];
 
         const oneDay = 24 * 60 * 60 * 1000; // Μια μέρα σε milliseconds
         const diffDays = Math.round(Math.abs((end - start) / oneDay)) + 1; // Συνολικές ημέρες
+
+        // Λίστα για να αποθηκεύσουμε όλες τις ημερομηνίες και να ελέγξουμε για ζευγάρια
+        const dateArray = [];
         for (let i = 0; i < diffDays; i++) {
             const currentDate = new Date(start.getTime() + i * oneDay);
-            const dateStr = currentDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
-            const dayOfWeek = currentDate.getDay();
-            const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+            dateArray.push({
+                date: currentDate,
+                dateStr: currentDate.toISOString().split('T')[0],
+                dayOfWeek: currentDate.getDay()
+            });
+        }
+
+        // Υπολογισμός εργάσιμων ημερών, αργιών και Σαββατοκύριακων
+        for (let i = 0; i < dateArray.length; i++) {
+            const { dateStr, dayOfWeek } = dateArray[i];
+            const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6); // Κυριακή (0) ή Σάββατο (6)
             const isHoliday = holidays.includes(dateStr);
 
             console.log(`Checking ${dateStr}: isHoliday=${isHoliday}, isWeekend=${isWeekend}`);
@@ -1153,7 +1163,31 @@
                 totalDays++;
             }
             if (isHoliday) holidayCount++;
-            if (isWeekend) weekendCount++;
+        }
+
+        // Υπολογισμός ζευγαριών Σάββατο-Κυριακή
+        for (let i = 0; i < dateArray.length - 1; i++) {
+            const currentDay = dateArray[i].dayOfWeek;
+            const nextDay = dateArray[i + 1].dayOfWeek;
+            // Αν σήμερα είναι Σάββατο (6) και αύριο Κυριακή (0), είναι ένα Σαββατοκύριακο
+            if (currentDay === 6 && nextDay === 0) {
+                weekendPairs++;
+                i++; // Παρακάμπτουμε την Κυριακή για να μην την ξαναμετρήσουμε
+            }
+        }
+
+        // Αν υπάρχει μεμονωμένη Κυριακή στην αρχή ή Σάββατο στο τέλος, την μετράμε ως μισό ΣΚ
+        if (dateArray.length === 1) {
+            if (dateArray[0].dayOfWeek === 0 || dateArray[0].dayOfWeek === 6) {
+                weekendPairs = 1; // Μετράμε ως 1 ΣΚ αν είναι μόνο Σάββατο ή Κυριακή
+            }
+        } else {
+            if (dateArray[0].dayOfWeek === 0) { // Κυριακή στην αρχή
+                weekendPairs++;
+            }
+            if (dateArray[dateArray.length - 1].dayOfWeek === 6) { // Σάββατο στο τέλος
+                weekendPairs++;
+            }
         }
 
         fromInput.value = `${fromStr} (${daysOfWeek[start.getDay()]})`;
@@ -1161,7 +1195,7 @@
 
         let warningText = "";
         if (holidayCount > 0) warningText += `Το εύρος περιλαμβάνει ${holidayCount} αργίες`;
-        if (weekendCount > 0) warningText += (warningText ? " & " : "") + `<span class='weekend'>Το εύρος περιλαμβάνει ${weekendCount} Σ/Κ</span>`;
+        if (weekendPairs > 0) warningText += (warningText ? " & " : "") + `<span class='weekend'>Το εύρος περιλαμβάνει ${weekendPairs} Σ/Κ</span>`;
 
         rangeWarning.innerHTML = warningText;
         rangeWarning.style.display = warningText ? "block" : "none";
