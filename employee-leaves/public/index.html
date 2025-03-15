@@ -285,6 +285,16 @@
             background-color: #c0392b;
         }
 
+        .summary-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .summary-column {
+            flex: 1;
+        }
+
         .summary label {
             font-weight: 500;
             margin: 5px 0;
@@ -299,7 +309,6 @@
         }
 
         .report {
-            margin-top: 20px;
             padding: 20px;
             background: #f9f9f9;
             border-radius: 8px;
@@ -340,15 +349,6 @@
             transform: translateY(-2px);
         }
 
-        .modern-button.generate-report {
-            background: linear-gradient(45deg, #66bb6a, #388e3c);
-        }
-
-        .modern-button.generate-report:hover {
-            background: linear-gradient(45deg, #388e3c, #66bb6a);
-            transform: translateY(-2px);
-        }
-
         .parental-hours-input {
             display: none;
             width: 60px;
@@ -359,14 +359,14 @@
         .reason-input, .protocol-input {
             width: 100%;
             padding: 5px;
-            resize: vertical; /* Επιτρέπει κάθετη αλλαγή μεγέθους */
-            min-height: 20px; /* Ελάχιστο ύψος */
-            overflow: hidden; /* Κρύβει το scrollbar όταν δεν χρειάζεται */
+            resize: vertical;
+            min-height: 20px;
+            overflow: hidden;
             box-sizing: border-box;
         }
 
         .reason-input {
-            max-length: 50; /* Όριο 50 χαρακτήρων στο CSS (indicative) */
+            max-length: 50;
         }
 
         .holiday-warning {
@@ -374,6 +374,10 @@
             font-size: 12px;
             display: none;
             margin-top: 2px;
+        }
+
+        .holiday-warning.weekend {
+            color: #ff9800;
         }
 
         .flatpickr-day.holiday {
@@ -519,17 +523,31 @@
 
         <div class="details" id="employeeDetails">
             <h2 id="employeeName"></h2>
-            <div class="summary">
-                <label>Δικαιούται <span id="currentYearEntitled"></span>: <span id="entitled"></span></label>
-                <label>Υπόλοιπα προηγούμενου έτους: <input type="number" id="previous" min="0" onchange="updateTotals()"></label>
-                <label>Σύνολα <span id="currentYearTotal"></span>: <span id="total"></span></label>
-                <label>Υπόλοιπα: <span id="remaining"></span></label>
-                <label>Συνολικές ώρες γονικής άδειας: <span id="totalParentalHours"></span></label>
-                <label>Υπόλοιπες ώρες γονικής άδειας: <span id="remainingParentalHours"></span></label>
-                <label>Σύνολο Αιμοδοσίας: <span id="totalBloodDonationDays"></span></label>
-                <label>Υπόλοιπα Αιμοδοσίας: <span id="remainingBloodDonationDays"></span></label>
-                <label>Σύνολο Υ.Δ: <span id="totalSpecialDays"></span></label>
-                <label>Υπόλοιπα Υ.Δ: <span id="remainingSpecialDays"></span></label>
+            <div class="summary-container">
+                <div class="summary-column summary">
+                    <label>Δικαιούται <span id="currentYearEntitled"></span>: <span id="entitled"></span></label>
+                    <label>Υπόλοιπα προηγούμενου έτους: <input type="number" id="previous" min="0" onchange="updateTotals()"></label>
+                    <label>Σύνολα <span id="currentYearTotal"></span>: <span id="total"></span></label>
+                    <label>Υπόλοιπα: <span id="remaining"></span></label>
+                    <label>Συνολικές ώρες γονικής άδειας: <span id="totalParentalHours"></span></label>
+                    <label>Υπόλοιπες ώρες γονικής άδειας: <span id="remainingParentalHours"></span></label>
+                    <label>Σύνολο Αιμοδοσίας: <span id="totalBloodDonationDays"></span></label>
+                    <label>Υπόλοιπα Αιμοδοσίας: <span id="remainingBloodDonationDays"></span></label>
+                    <label>Σύνολο Υ.Δ: <span id="totalSpecialDays"></span></label>
+                    <label>Υπόλοιπα Υ.Δ: <span id="remainingSpecialDays"></span></label>
+                </div>
+                <div class="summary-column report" id="leaveReport">
+                    <h3>Σύνολο Αδειών <span id="reportYear"></span></h3>
+                    <p>Σύνολο Ημερών Αδειών: <span id="totalLeaveDays"></span></p>
+                    <p>Κανονική: <span id="regularDays"></span></p>
+                    <p>Αναρρωτική: <span id="sickDays"></span></p>
+                    <p>Γονική: <span id="parentalDays"></span> (Ώρες: <span id="parentalHours"></span>)</p>
+                    <p>Εκπαιδευτική: <span id="educationalDays"></span></p>
+                    <p>Υ.Δ: <span id="specialDays"></span></p>
+                    <p>Αιμοδοσία: <span id="bloodDonationDays"></span></p>
+                    <p>Ρεπό: <span id="dayOffDays"></span></p>
+                    <p>Άλλη: <span id="otherDays"></span></p>
+                </div>
             </div>
             <div class="year-selector">
                 <label>Επιλογή Έτους: </label>
@@ -564,19 +582,6 @@
             </table>
             <button class="modern-button add-leave" onclick="addLeaveRow()">Προσθήκη Άδειας</button>
             <button class="modern-button print-leaves" onclick="printLeaves()">Εκτύπωση Αδειών</button>
-            <button class="modern-button generate-report" onclick="generateReport()">Δημιουργία Αναφοράς</button>
-            <div class="report" id="leaveReport" style="display: none;">
-                <h3>Αναφορά Αδειών <span id="reportYear"></span></h3>
-                <p>Σύνολο Ημερών Αδειών: <span id="totalLeaveDays"></span></p>
-                <p>Κανονική: <span id="regularDays"></span></p>
-                <p>Αναρρωτική: <span id="sickDays"></span></p>
-                <p>Γονική: <span id="parentalDays"></span> (Ώρες: <span id="parentalHours"></span>)</p>
-                <p>Εκπαιδευτική: <span id="educationalDays"></span></p>
-                <p>Υ.Δ: <span id="specialDays"></span></p>
-                <p>Αιμοδοσία: <span id="bloodDonationDays"></span></p>
-                <p>Ρεπό: <span id="dayOffDays"></span></p>
-                <p>Άλλη: <span id="otherDays"></span></p>
-            </div>
         </div>
     </div>
 
@@ -989,8 +994,8 @@
         }
 
         function autoResizeTextarea(textarea) {
-            textarea.style.height = "auto"; // Επαναφέρει το ύψος
-            textarea.style.height = textarea.scrollHeight + "px"; // Προσαρμόζει στο περιεχόμενο
+            textarea.style.height = "auto";
+            textarea.style.height = textarea.scrollHeight + "px";
         }
 
         function addLeaveRow() {
@@ -1075,7 +1080,6 @@
                 }
             });
 
-            // Αρχική προσαρμογή μεγέθους
             autoResizeTextarea(document.getElementById(`protocolNumber${rowIndex}`));
             autoResizeTextarea(document.getElementById(`reason${rowIndex}`));
         }
@@ -1083,7 +1087,6 @@
         function cancelLeaveRow(index) {
             leaves.splice(index, 1);
             renderLeaveTable();
-            generateReport();
         }
 
         async function calculateDays(input, index) {
@@ -1116,41 +1119,59 @@
                     return;
                 }
 
-                const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-
                 const year = start.getFullYear();
                 if (!greekHolidays[year]) {
                     greekHolidays[year] = await getGreekHolidays(year);
                 }
                 const holidays = greekHolidays[year];
+
+                let totalDays = 0;
                 let holidayCount = 0;
+                let weekendCount = 0;
                 let current = new Date(start);
+                const daysOfWeek = ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"];
+
                 while (current <= end) {
                     const dateStr = current.toISOString().split('T')[0];
-                    if (holidays.includes(dateStr)) holidayCount++;
+                    const dayOfWeek = current.getDay();
+                    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                    const isHoliday = holidays.includes(dateStr);
+
+                    if (!isHoliday && !isWeekend) {
+                        totalDays++;
+                    }
+                    if (isHoliday) holidayCount++;
+                    if (isWeekend) weekendCount++;
+
                     current.setDate(current.getDate() + 1);
                 }
 
-                rangeWarning.textContent = holidayCount > 0 ? "Το εύρος περιλαμβάνει αργίες" : "";
-                rangeWarning.style.display = holidayCount > 0 ? "block" : "none";
+                fromInput.value = `${fromStr} (${daysOfWeek[start.getDay()]})`;
+                toInput.value = `${toStr} (${daysOfWeek[end.getDay()]})`;
 
-                row.cells[3].querySelector(".days").textContent = days;
+                let warningText = "";
+                if (holidayCount > 0) warningText += "Το εύρος περιλαμβάνει αργίες";
+                if (weekendCount > 0) warningText += (warningText ? " & " : "") + "<span class='weekend'>Το εύρος περιλαμβάνει Σ/Κ</span>";
+
+                rangeWarning.innerHTML = warningText;
+                rangeWarning.style.display = warningText ? "block" : "none";
+
+                row.cells[3].querySelector(".days").textContent = totalDays;
                 leaves[index].from_date = `${fromYear}-${fromMonth.toString().padStart(2, "0")}-${fromDay.toString().padStart(2, "0")}`;
                 leaves[index].to_date = `${toYear}-${toMonth.toString().padStart(2, "0")}-${toDay.toString().padStart(2, "0")}`;
-                leaves[index].days = days;
+                leaves[index].days = totalDays;
 
                 const parentalInput = row.cells[7].querySelector("input[type='radio']");
                 const bloodDonationInput = row.cells[10].querySelector("input[type='radio']");
-                const specialInput = row.cells[9].querySelector("input[type='radio']");
 
-                parentalInput.disabled = days > 1;
-                if (days > 1 && parentalInput.checked) {
+                parentalInput.disabled = totalDays > 1;
+                if (totalDays > 1 && parentalInput.checked) {
                     parentalInput.checked = false;
                     leaves[index].type = "";
                 }
 
-                bloodDonationInput.disabled = days !== 2;
-                if (days !== 2 && bloodDonationInput.checked) {
+                bloodDonationInput.disabled = totalDays !== 2;
+                if (totalDays !== 2 && bloodDonationInput.checked) {
                     bloodDonationInput.checked = false;
                     leaves[index].type = "";
                 }
@@ -1183,25 +1204,6 @@
                 return;
             }
 
-            const startDate = new Date(leave.from_date);
-            const endDate = new Date(leave.to_date);
-            const year = startDate.getFullYear();
-            if (!greekHolidays[year]) {
-                greekHolidays[year] = await getGreekHolidays(year);
-            }
-            const holidays = greekHolidays[year];
-            let holidayCount = 0;
-            let current = new Date(startDate);
-            while (current <= endDate) {
-                const dateStr = current.toISOString().split('T')[0];
-                if (holidays.includes(dateStr)) holidayCount++;
-                current.setDate(current.getDate() + 1);
-            }
-            if (holidayCount > 0) {
-                alert("Δεν επιτρέπεται η αποθήκευση άδειας που περιλαμβάνει αργίες!");
-                return;
-            }
-
             const protocolNumber = document.getElementById(`protocolNumber${index}`).value || null;
             const reason = document.getElementById(`reason${index}`).value || null;
             const totalParentalHours = leave.type === "parental" ? (parseInt(document.getElementById(`parentalHours${index}`).value) || 0) : 0;
@@ -1213,10 +1215,10 @@
 
             if (leave.type === "special") {
                 const totalSpecialDaysTaken = leaves
-                    .filter(l => l.saved && l.special && new Date(l.from_date).getFullYear() === year)
+                    .filter(l => l.saved && l.special && new Date(l.from_date).getFullYear() === selectedYear)
                     .reduce((sum, l) => sum + l.days, 0);
                 if (totalSpecialDaysTaken + leave.days > TOTAL_SPECIAL_DAYS) {
-                    alert(`Ο εργαζόμενος έχει ξεπεράσει το όριο των ${TOTAL_SPECIAL_DAYS} ημερών Υ.Δ για το ${year}!`);
+                    alert(`Ο εργαζόμενος έχει ξεπεράσει το όριο των ${TOTAL_SPECIAL_DAYS} ημερών Υ.Δ για το ${selectedYear}!`);
                     return;
                 }
             }
@@ -1250,7 +1252,6 @@
             leaves[index] = { ...data[0], saved: true };
             renderLeaveTable();
             await updateTotals();
-            generateReport();
         }
 
         async function deleteLeave(leaveId) {
@@ -1308,7 +1309,6 @@
                 }
                 renderLeaveTable();
                 await updateTotals();
-                generateReport();
             } catch (err) {
                 console.error("Unexpected error during deletion:", err);
                 alert("Προέκυψε απρόσμενο σφάλμα κατά τη διαγραφή!");
@@ -1370,29 +1370,41 @@
         function renderLeaveTable() {
             const tbody = document.getElementById("leaveTableBody");
             tbody.innerHTML = "";
-            const filteredLeaves = leaves.filter(leave => new Date(leave.from_date).getFullYear() === selectedYear);
+            const filteredLeaves = leaves.filter(leave => new Date(leave.from_date).getFullYear() === selectedYear)
+                .sort((a, b) => new Date(b.from_date) - new Date(a.from_date));
+
             filteredLeaves.forEach(async (leave, index) => {
                 const row = document.createElement("tr");
+                const daysOfWeek = ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"];
+                const fromDate = new Date(leave.from_date);
+                const toDate = new Date(leave.to_date);
+                const fromDisplay = `${leave.from_date.split('-').reverse().join('/')} (${daysOfWeek[fromDate.getDay()]})`;
+                const toDisplay = `${leave.to_date.split('-').reverse().join('/')} (${daysOfWeek[toDate.getDay()]})`;
 
-                const year = new Date(leave.from_date).getFullYear();
+                const year = fromDate.getFullYear();
                 if (!greekHolidays[year]) {
                     greekHolidays[year] = await getGreekHolidays(year);
                 }
                 const holidays = greekHolidays[year];
                 let holidayCount = 0;
-                const start = new Date(leave.from_date);
-                const end = new Date(leave.to_date);
-                let current = new Date(start);
-                while (current <= end) {
+                let weekendCount = 0;
+                let current = new Date(fromDate);
+                while (current <= toDate) {
                     const dateStr = current.toISOString().split('T')[0];
+                    const dayOfWeek = current.getDay();
                     if (holidays.includes(dateStr)) holidayCount++;
+                    if (dayOfWeek === 0 || dayOfWeek === 6) weekendCount++;
                     current.setDate(current.getDate() + 1);
                 }
 
+                let warningText = "";
+                if (holidayCount > 0) warningText += "Το εύρος περιλαμβάνει αργίες";
+                if (weekendCount > 0) warningText += (warningText ? " & " : "") + "<span class='weekend'>Το εύρος περιλαμβάνει Σ/Κ</span>";
+
                 row.innerHTML = `
                     <td>${index + 1}</td>
-                    <td><input type="text" class="flatpickr" id="fromDate${index}" value="${leave.from_date.split('-').reverse().join('/')}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"><span class="holiday-warning" id="rangeHolidayWarning${index}">${holidayCount > 0 ? "Το εύρος περιλαμβάνει αργίες" : ""}</span></td>
-                    <td><input type="text" class="flatpickr" id="toDate${index}" value="${leave.to_date.split('-').reverse().join('/')}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"></td>
+                    <td><input type="text" class="flatpickr" id="fromDate${index}" value="${fromDisplay}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"><span class="holiday-warning" id="rangeHolidayWarning${index}">${warningText}</span></td>
+                    <td><input type="text" class="flatpickr" id="toDate${index}" value="${toDisplay}" ${leave.saved ? 'disabled' : ''} onchange="calculateDays(this, ${index})"></td>
                     <td><span class="days">${leave.days}</span></td>
                     <td><textarea class="protocol-input" id="protocolNumber${index}" placeholder="Αρ. Πρωτ. (προαιρετικό)" ${leave.saved ? 'disabled' : ''} oninput="autoResizeTextarea(this)">${leave.protocol_number || ''}</textarea></td>
                     <td><input type="radio" name="leave${index}" value="regular" ${leave.regular ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
@@ -1413,11 +1425,7 @@
                 `;
                 tbody.appendChild(row);
 
-                document.getElementById(`rangeHolidayWarning${index}`).style.display = holidayCount > 0 ? "block" : "none";
-
-                // Αρχική προσαρμογή μεγέθους για τα textareas
-                autoResizeTextarea(document.getElementById(`protocolNumber${index}`));
-                autoResizeTextarea(document.getElementById(`reason${index}`));
+                document.getElementById(`rangeHolidayWarning${index}`).style.display = warningText ? "block" : "none";
 
                 if (!leave.saved) {
                     flatpickr(`#fromDate${index}`, {
@@ -1458,15 +1466,16 @@
                         }
                     });
                 }
+
+                autoResizeTextarea(document.getElementById(`protocolNumber${index}`));
+                autoResizeTextarea(document.getElementById(`reason${index}`));
             });
+
+            generateReport();
         }
 
         function printLeaves() {
-            generateReport();
-            const report = document.getElementById("leaveReport");
-            report.style.display = "block";
             window.print();
-            report.style.display = "none";
         }
 
         function generateReport() {
@@ -1501,8 +1510,6 @@
             document.getElementById("bloodDonationDays").textContent = bloodDonationDays;
             document.getElementById("dayOffDays").textContent = dayOffDays;
             document.getElementById("otherDays").textContent = otherDays;
-
-            document.getElementById("leaveReport").style.display = "block";
         }
     </script>
 </body>
