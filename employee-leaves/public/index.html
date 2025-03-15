@@ -449,6 +449,15 @@
                 size: landscape;
                 margin: 10mm;
             }
+            /* Εξασφαλίζει ότι τα περιθώρια δεν περιλαμβάνουν URL ή ημερομηνία */
+    @page {
+        @top-right {
+            content: normal; /* Καθαρίζει το περιεχόμενο δεξιά πάνω */
+        }
+        @bottom-right {
+            content: normal; /* Καθαρίζει το περιεχόμενο δεξιά κάτω */
+        }
+    }
             body {
                 visibility: visible;
                 width: 100%;
