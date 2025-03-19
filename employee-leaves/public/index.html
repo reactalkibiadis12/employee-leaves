@@ -609,21 +609,21 @@
             <h2 id="employeeName"></h2>
             <div class="summary-container">
                 <div class="summary-column summary">
-                    <label>Δικαιούται <span id="currentYearEntitled"></span>: <span id="entitled"></span></label>
-                    <label>Υπόλοιπα προηγούμενου έτους: <input type="number" id="previous" min="0" onchange="updateTotals()"></label>
-                    <label>Σύνολα <span id="currentYearTotal"></span>: <span id="total"></span></label>
-                    <label>Υπόλοιπα: <span id="remaining"></span></label>
-                    <label>Συνολικές ώρες γονικής άδειας: <span id="totalParentalHours"></span></label>
-                    <label>Υπόλοιπες ώρες γονικής άδειας: <span id="remainingParentalHours"></span></label>
-                    <label>Σύνολο Αιμοδοσίας: <span id="totalBloodDonationDays"></span></label>
-                    <label>Υπόλοιπα Αιμοδοσίας: <span id="remainingBloodDonationDays"></span></label>
-                    <label>Σύνολο Υ.Δ: <span id="totalSpecialDays"></span></label>
-                    <label>Υπόλοιπα Υ.Δ: <span id="remainingSpecialDays"></span></label>
-                    <label>Σύνολο Αναρρωτικών: <input type="number" id="totalSickDays" min="0" onchange="updateTotals()"></label>
-                    <label>Υπόλοιπα Αναρρωτικών: <span id="remainingSickDays"></span></label>
-                    <label>Σύνολο Άλλων Αδειών: <input type="number" id="totalOtherDays" min="0" onchange="updateTotals()"></label>
-                    <label>Υπόλοιπα Άλλων Αδειών: <span id="remainingOtherDays"></span></label>
-                </div>
+    <label>Δικαιούται <span id="currentYearEntitled"></span>: <span id="entitled"></span></label>
+    <label>Υπόλοιπα προηγούμενου έτους: <input type="number" id="previous" min="0" onchange="updateTotals()"></label>
+    <label>Σύνολα <span id="currentYearTotal"></span>: <span id="total"></span></label>
+    <label>Υπόλοιπα: <span id="remaining"></span></label>
+    <label>Συνολικές ώρες γονικής άδειας: <span id="totalParentalHours"></span></label>
+    <label>Υπόλοιπες ώρες γονικής άδειας: <span id="remainingParentalHours"></span></label>
+    <label>Σύνολο Αιμοδοσίας: <span id="totalBloodDonationDays"></span></label>
+    <label>Υπόλοιπα Αιμοδοσίας: <span id="remainingBloodDonationDays"></span></label>
+    <label>Σύνολο Υ.Δ: <span id="totalSpecialDays"></span></label>
+    <label>Υπόλοιπα Υ.Δ: <span id="remainingSpecialDays"></span></label>
+    <label>Σύνολο Αναρρωτικών: <input type="number" id="totalSickDaysLimit" min="0" onchange="updateTotals()"></label>
+    <label>Υπόλοιπα Αναρρωτικών: <span id="remainingSickDays"></span></label>
+    <label>Σύνολο Άλλων Αδειών: <input type="number" id="totalOtherDaysLimit" min="0" onchange="updateTotals()"></label>
+    <label>Υπόλοιπα Άλλων Αδειών: <span id="remainingOtherDays"></span></label>
+</div>
                 <div class="summary-column report" id="leaveReport">
                     <h3>Σύνολο Αδειών <span id="reportYear"></span></h3>
                     <p>Σύνολο Ημερών Αδειών: <span id="totalLeaveDays"></span></p>
@@ -1045,21 +1045,21 @@
             }
             selectedEmployee = data;
             document.getElementById("employeeDetails").style.display = "block";
-            actions.style.display = "flex";
-            updateEmployeeDetailsDisplay();
-            document.getElementById("previous").value = data.previous || 0;
-            document.getElementById("entitled").textContent = data.entitled;
-            document.getElementById("total").textContent = data.total;
-            document.getElementById("remaining").textContent = data.remaining;
-            document.getElementById("currentYearEntitled").textContent = currentYear;
-            document.getElementById("currentYearTotal").textContent = currentYear;
+    actions.style.display = "flex";
+    updateEmployeeDetailsDisplay();
+    document.getElementById("previous").value = data.previous || 0;
+    document.getElementById("entitled").textContent = data.entitled;
+    document.getElementById("total").textContent = data.total;
+    document.getElementById("remaining").textContent = data.remaining;
+    document.getElementById("currentYearEntitled").textContent = currentYear;
+    document.getElementById("currentYearTotal").textContent = currentYear;
 
-            const totalParentalHours = calculateTotalParentalHours(data);
-            document.getElementById("totalParentalHours").textContent = totalParentalHours;
-            document.getElementById("totalBloodDonationDays").textContent = TOTAL_BLOOD_DONATION_DAYS;
-            document.getElementById("totalSpecialDays").textContent = TOTAL_SPECIAL_DAYS;
-            document.getElementById("totalSickDays").value = data.total_sick_days || DEFAULT_SICK_DAYS;
-            document.getElementById("totalOtherDays").value = data.total_other_days || DEFAULT_OTHER_DAYS;
+    const totalParentalHours = calculateTotalParentalHours(data);
+    document.getElementById("totalParentalHours").textContent = totalParentalHours;
+    document.getElementById("totalBloodDonationDays").textContent = TOTAL_BLOOD_DONATION_DAYS;
+    document.getElementById("totalSpecialDays").textContent = TOTAL_SPECIAL_DAYS;
+    document.getElementById("totalSickDaysLimit").value = data.total_sick_days_limit || DEFAULT_SICK_DAYS;
+    document.getElementById("totalOtherDaysLimit").value = data.total_other_days_limit || DEFAULT_OTHER_DAYS;
 
             const { data: leavesData, error: leavesError } = await supabase
                 .from("leaves")
@@ -1496,8 +1496,11 @@
             }
         }
 
-   async function updateTotals() {
+  async function updateTotals() {
     const previous = parseInt(document.getElementById("previous").value) || 0;
+    const totalSickDaysLimit = parseInt(document.getElementById("totalSickDaysLimit").value) || DEFAULT_SICK_DAYS;
+    const totalOtherDaysLimit = parseInt(document.getElementById("totalOtherDaysLimit").value) || DEFAULT_OTHER_DAYS;
+
     let regularDays = 0;
     let totalParentalHoursTaken = 0;
     let totalBloodDonationDaysTaken = 0;
@@ -1525,10 +1528,6 @@
     const remainingParentalHours = Math.max(totalParentalHours - totalParentalHoursTaken, 0);
     const remainingBloodDonationDays = Math.max(TOTAL_BLOOD_DONATION_DAYS - totalBloodDonationDaysTaken, 0);
     const remainingSpecialDays = Math.max(TOTAL_SPECIAL_DAYS - totalSpecialDaysTaken, 0);
-    
-    // Χρήση των αρχικών ορίων από τη βάση ή τις σταθερές αν δεν υπάρχουν
-    const totalSickDaysLimit = selectedEmployee.total_sick_days_limit || DEFAULT_SICK_DAYS;
-    const totalOtherDaysLimit = selectedEmployee.total_other_days_limit || DEFAULT_OTHER_DAYS;
     const remainingSickDays = Math.max(totalSickDaysLimit - totalSickDaysTaken, 0);
     const remainingOtherDays = Math.max(totalOtherDaysLimit - totalOtherDaysTaken, 0);
 
@@ -1542,9 +1541,9 @@
     document.getElementById("remainingBloodDonationDays").textContent = remainingBloodDonationDays;
     document.getElementById("totalSpecialDays").textContent = TOTAL_SPECIAL_DAYS;
     document.getElementById("remainingSpecialDays").textContent = remainingSpecialDays;
-    document.getElementById("totalSickDays").textContent = totalSickDaysTaken; // Χρησιμοποιημένες ημέρες
+    document.getElementById("totalSickDaysLimit").value = totalSickDaysLimit;
     document.getElementById("remainingSickDays").textContent = remainingSickDays;
-    document.getElementById("totalOtherDays").textContent = totalOtherDaysTaken; // Χρησιμοποιημένες ημέρες
+    document.getElementById("totalOtherDaysLimit").value = totalOtherDaysLimit;
     document.getElementById("remainingOtherDays").textContent = remainingOtherDays;
 
     // Ενημέρωση στη βάση δεδομένων
@@ -1554,10 +1553,10 @@
             previous: previous,
             total: total,
             remaining: remaining,
-            total_sick_days: totalSickDaysTaken, // Αποθηκεύουμε τις χρησιμοποιημένες ημέρες
-            total_other_days: totalOtherDaysTaken, // Αποθηκεύουμε τις χρησιμοποιημένες ημέρες
-            total_sick_days_limit: totalSickDaysLimit, // Αποθηκεύουμε το όριο (μόνο αν χρειάζεται να αλλάξει)
-            total_other_days_limit: totalOtherDaysLimit // Αποθηκεύουμε το όριο (μόνο αν χρειάζεται να αλλάξει)
+            total_sick_days_limit: totalSickDaysLimit, // Αποθηκεύουμε το όριο αναρρωτικών
+            total_sick_days: totalSickDaysTaken, // Αποθηκεύουμε τις χρησιμοποιημένες αναρρωτικές
+            total_other_days_limit: totalOtherDaysLimit, // Αποθηκεύουμε το όριο άλλων αδειών
+            total_other_days: totalOtherDaysTaken // Αποθηκεύουμε τις χρησιμοποιημένες άλλες άδειες
         })
         .eq("id", selectedEmployee.id);
 
@@ -1567,10 +1566,10 @@
         selectedEmployee.previous = previous;
         selectedEmployee.total = total;
         selectedEmployee.remaining = remaining;
-        selectedEmployee.total_sick_days = totalSickDaysTaken;
-        selectedEmployee.total_other_days = totalOtherDaysTaken;
         selectedEmployee.total_sick_days_limit = totalSickDaysLimit;
+        selectedEmployee.total_sick_days = totalSickDaysTaken;
         selectedEmployee.total_other_days_limit = totalOtherDaysLimit;
+        selectedEmployee.total_other_days = totalOtherDaysTaken;
     }
 }
 
