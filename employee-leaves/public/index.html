@@ -1240,12 +1240,7 @@
                     parentalInput.checked = false;
                     leaves[index].type = "";
                 }
-
-                bloodDonationInput.disabled = totalDays !== 2;
-                if (totalDays !== 2 && bloodDonationInput.checked) {
-                    bloodDonationInput.checked = false;
-                    leaves[index].type = "";
-                }
+                
             } else {
                 rangeWarning.style.display = "none";
             }
@@ -1521,7 +1516,7 @@
                     <td><input type="radio" name="leave${index}" value="parental" ${leave.parental ? "checked" : ""} ${leave.saved ? 'disabled' : ''} ${leave.days > 1 ? 'disabled' : ''} onchange="updateLeave(${index})"><input type="number" class="parental-hours-input" id="parentalHours${index}" value="${leave.parental_hours || ''}" placeholder="Ώρες" min="0" ${leave.saved ? 'disabled' : ''} style="display: ${leave.parental ? 'inline-block' : 'none'};"></td>
                     <td><input type="radio" name="leave${index}" value="educational" ${leave.educational ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
                     <td><input type="radio" name="leave${index}" value="special" ${leave.special ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
-                    <td><input type="radio" name="leave${index}" value="blood_donation" ${leave.blood_donation ? "checked" : ""} ${leave.saved ? 'disabled' : ''} ${leave.days !== 2 ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
+                    <td><input type="radio" name="leave${index}" value="blood_donation" ${leave.blood_donation ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
                     <td><input type="radio" name="leave${index}" value="day_off" ${leave.day_off ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
                     <td><input type="radio" name="leave${index}" value="other" ${leave.other ? "checked" : ""} ${leave.saved ? 'disabled' : ''} onchange="updateLeave(${index})"></td>
                     <td><textarea class="reason-input" id="reason${index}" maxlength="50" placeholder="Αιτιολογία (προαιρετικό, max 50)" ${leave.saved ? 'disabled' : ''} oninput="autoResizeTextarea(this)">${leave.reason || ''}</textarea></td>
