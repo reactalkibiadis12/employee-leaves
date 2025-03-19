@@ -6,7 +6,7 @@
     <title>Διαχείριση Αδειών Εργαζομένων</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="icon" type="image/png" href="icon.png">
-   <style>
+ <style>
     * {
         margin: 0;
         padding: 0;
@@ -274,12 +274,17 @@
         background-color: #fff;
         cursor: pointer;
         vertical-align: middle;
+        position: relative;
     }
 
-    input[type="radio"]:checked {
-        background-color: #000; /* Μαύρο χρώμα όταν είναι επιλεγμένο */
-        border: 2px solid #000;
-        box-shadow: inset 0 0 0 3px #fff; /* Λευκό κέντρο για αντίθεση */
+    input[type="radio"]:checked::before {
+        content: "●"; /* Χρησιμοποιούμε έναν μαύρο κύκλο ως ένδειξη */
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 12px;
+        color: #000; /* Μαύρο χρώμα για το σημάδι */
     }
 
     /* Στυλ για τις ημερομηνίες (inputs μέσα στον πίνακα) */
@@ -490,11 +495,13 @@
         }
         input[type="radio"] {
             border: 2px solid #000 !important;
+            -webkit-print-color-adjust: exact; /* Εξασφαλίζει σωστή απόδοση χρώματος */
         }
-        input[type="radio"]:checked {
-            background-color: #000 !important;
-            border: 2px solid #000 !important;
-            box-shadow: inset 0 0 0 3px #fff !important;
+        input[type="radio"]:checked::before {
+            content: "●"; /* Μαύρος κύκλος για το επιλεγμένο checkbox στην εκτύπωση */
+            color: #000 !important;
+            font-size: 12px;
+            -webkit-print-color-adjust: exact; /* Εξασφαλίζει σωστή απόδοση χρώματος */
         }
         .flatpickr input[type="text"],
         td input[type="text"] {
