@@ -1476,8 +1476,11 @@ async function saveLeave(index) {
 
 async function updateTotals() {
     const previous = parseInt(document.getElementById("previous").value) || 0;
-    const totalSickDays = parseInt(document.getElementById("totalSickDays").value) || 0; // Ελεύθερη τιμή από το UI
-    const totalOtherDays = parseInt(document.getElementById("totalOtherDays").value) || 0; // Ελεύθερη τιμή από το UI
+    // Εξασφαλίζουμε ότι παίρνουμε την ακριβή τιμή από το UI, ακόμα και αν είναι 0
+    const totalSickDaysInput = document.getElementById("totalSickDays").value;
+    const totalOtherDaysInput = document.getElementById("totalOtherDays").value;
+    const totalSickDays = totalSickDaysInput === "" ? DEFAULT_SICK_DAYS : parseInt(totalSickDaysInput); // Default μόνο αν είναι κενό
+    const totalOtherDays = totalOtherDaysInput === "" ? DEFAULT_OTHER_DAYS : parseInt(totalOtherDaysInput); // Default μόνο αν είναι κενό
 
     let regularDays = 0;
     let totalParentalHoursTaken = 0;
@@ -1519,9 +1522,9 @@ async function updateTotals() {
     document.getElementById("remainingBloodDonationDays").textContent = remainingBloodDonationDays;
     document.getElementById("totalSpecialDays").textContent = TOTAL_SPECIAL_DAYS;
     document.getElementById("remainingSpecialDays").textContent = remainingSpecialDays;
-    document.getElementById("totalSickDays").value = totalSickDays;
+    document.getElementById("totalSickDays").value = totalSickDays; // Εμφανίζουμε την ακριβή τιμή
     document.getElementById("remainingSickDays").textContent = remainingSickDays;
-    document.getElementById("totalOtherDays").value = totalOtherDays;
+    document.getElementById("totalOtherDays").value = totalOtherDays; // Εμφανίζουμε την ακριβή τιμή
     document.getElementById("remainingOtherDays").textContent = remainingOtherDays;
 
     // Ενημέρωση στη βάση δεδομένων
@@ -1531,8 +1534,8 @@ async function updateTotals() {
             previous: previous,
             total: total,
             remaining: remaining,
-            total_sick_days: totalSickDays, // Αποθηκεύουμε την τιμή από το UI
-            total_other_days: totalOtherDays // Αποθηκεύουμε την τιμή από το UI
+            total_sick_days: totalSickDays, // Αποθηκεύουμε την ακριβή τιμή από το UI
+            total_other_days: totalOtherDays // Αποθηκεύουμε την ακριβή τιμή από το UI
         })
         .eq("id", selectedEmployee.id);
 
