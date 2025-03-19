@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="icon" type="image/png" href="icon.png">
     <style>
-        /* Existing styles remain unchanged */
         * {
             margin: 0;
             padding: 0;
@@ -540,6 +539,10 @@
                     <label>Υπόλοιπα Αιμοδοσίας: <span id="remainingBloodDonationDays"></span></label>
                     <label>Σύνολο Υ.Δ: <span id="totalSpecialDays"></span></label>
                     <label>Υπόλοιπα Υ.Δ: <span id="remainingSpecialDays"></span></label>
+                    <label>Σύνολο Αναρρωτικών: <input type="number" id="totalSickDays" min="0" onchange="updateTotals()"></label>
+                    <label>Υπόλοιπα Αναρρωτικών: <span id="remainingSickDays"></span></label>
+                    <label>Σύνολο Άλλων Αδειών: <input type="number" id="totalOtherDays" min="0" onchange="updateTotals()"></label>
+                    <label>Υπόλοιπα Άλλων Αδειών: <span id="remainingOtherDays"></span></label>
                 </div>
                 <div class="summary-column report" id="leaveReport">
                     <h3>Σύνολο Αδειών <span id="reportYear"></span></h3>
@@ -604,18 +607,20 @@
         let allEmployees = [];
         let currentYear = new Date().getFullYear();
         let selectedYear = currentYear;
-        const adminEmail = "themspyr@gmail.com";
+        const adminEmails = ["themspyr@gmail.com", "papape@eedpmt.ypen.gr"];
         let greekHolidays = {};
 
         const TOTAL_BLOOD_DONATION_DAYS = 6;
         const TOTAL_SPECIAL_DAYS = 2;
         const DEFAULT_ENTITLED_DAYS = 25;
+        const DEFAULT_SICK_DAYS = 6;
+        const DEFAULT_OTHER_DAYS = 5;
 
         async function checkAuth() {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
                 const user = session.user;
-                if (user.email === adminEmail) {
+                if (adminEmails.includes(user.email)) {
                     document.getElementById("loginContainer").style.display = "none";
                     document.getElementById("mainContainer").style.display = "block";
                     await checkAndUpdateYear();
@@ -648,7 +653,9 @@
                             previous: emp.remaining,
                             entitled: DEFAULT_ENTITLED_DAYS,
                             total: DEFAULT_ENTITLED_DAYS + emp.remaining,
-                            remaining: DEFAULT_ENTITLED_DAYS + emp.remaining
+                            remaining: DEFAULT_ENTITLED_DAYS + emp.remaining,
+                            total_sick_days: DEFAULT_SICK_DAYS,
+                            total_other_days: DEFAULT_OTHER_DAYS
                         })
                         .eq("id", emp.id);
 
@@ -687,7 +694,7 @@
                 return;
             }
 
-            if (email !== adminEmail) {
+            if (!adminEmails.includes(email)) {
                 errorMsg.textContent = "Μόνο ο διαχειριστής μπορεί να συνδεθεί!";
                 errorMsg.style.display = "block";
                 await supabase.auth.signOut();
@@ -785,7 +792,9 @@
                     total: DEFAULT_ENTITLED_DAYS,
                     remaining: DEFAULT_ENTITLED_DAYS,
                     number_of_children: numberOfChildren,
-                    different_educational_levels: differentLevels
+                    different_educational_levels: differentLevels,
+                    total_sick_days: DEFAULT_SICK_DAYS,
+                    total_other_days: DEFAULT_OTHER_DAYS
                 });
                 if (error) {
                     console.error("Error adding employee:", error);
@@ -958,6 +967,8 @@
             document.getElementById("totalParentalHours").textContent = totalParentalHours;
             document.getElementById("totalBloodDonationDays").textContent = TOTAL_BLOOD_DONATION_DAYS;
             document.getElementById("totalSpecialDays").textContent = TOTAL_SPECIAL_DAYS;
+            document.getElementById("totalSickDays").value = data.total_sick_days || DEFAULT_SICK_DAYS;
+            document.getElementById("totalOtherDays").value = data.total_other_days || DEFAULT_OTHER_DAYS;
 
             const { data: leavesData, error: leavesError } = await supabase
                 .from("leaves")
@@ -1057,6 +1068,8 @@
                 parental_hours: 0,
                 blood_donation_days: 0,
                 special_days: 0,
+                sick_days: 0,
+                other_days: 0,
                 reason: "",
                 saved: false
             });
@@ -1274,9 +1287,31 @@
             if (leave.type === "special") {
                 const totalSpecialDaysTaken = leaves
                     .filter(l => l.saved && l.special && new Date(l.from_date).getFullYear() === selectedYear)
-                    .reduce((sum, l) => sum + l.days, 0);
+                    .reduce((sum, l) => sum + l.special_days, 0);
                 if (totalSpecialDaysTaken + leave.days > TOTAL_SPECIAL_DAYS) {
                     alert(`Ο εργαζόμενος έχει ξεπεράσει το όριο των ${TOTAL_SPECIAL_DAYS} ημερών Υ.Δ για το ${selectedYear}!`);
+                    return;
+                }
+            }
+
+            if (leave.type === "sick") {
+                const totalSickDaysTaken = leaves
+                    .filter(l => l.saved && l.sick && new Date(l.from_date).getFullYear() === selectedYear)
+                    .reduce((sum, l) => sum + (l.sick_days || l.days), 0);
+                const totalSickDays = parseInt(document.getElementById("totalSickDays").value) || DEFAULT_SICK_DAYS;
+                if (totalSickDaysTaken + leave.days > totalSickDays) {
+                    alert(`Ο εργαζόμενος έχει ξεπεράσει το όριο των ${totalSickDays} αναρρωτικών ημερών για το ${selectedYear}!`);
+                    return;
+                }
+            }
+
+            if (leave.type === "other") {
+                const totalOtherDaysTaken = leaves
+                    .filter(l => l.saved && l.other && new Date(l.from_date).getFullYear() === selectedYear)
+                    .reduce((sum, l) => sum + (l.other_days || l.days), 0);
+                const totalOtherDays = parseInt(document.getElementById("totalOtherDays").value) || DEFAULT_OTHER_DAYS;
+                if (totalOtherDaysTaken + leave.days > totalOtherDays) {
+                    alert(`Ο εργαζόμενος έχει ξεπεράσει το όριο των ${totalOtherDays} άλλων ημερών για το ${selectedYear}!`);
                     return;
                 }
             }
@@ -1298,6 +1333,8 @@
                 parental_hours: totalParentalHours,
                 blood_donation_days: leave.type === "blood_donation" ? leave.days : 0,
                 special_days: leave.type === "special" ? leave.days : 0,
+                sick_days: leave.type === "sick" ? leave.days : 0,
+                other_days: leave.type === "other" ? leave.days : 0,
                 reason: reason
             };
 
@@ -1375,10 +1412,14 @@
 
         async function updateTotals() {
             const previous = parseInt(document.getElementById("previous").value) || 0;
+            const totalSickDays = parseInt(document.getElementById("totalSickDays").value) || DEFAULT_SICK_DAYS;
+            const totalOtherDays = parseInt(document.getElementById("totalOtherDays").value) || DEFAULT_OTHER_DAYS;
             let regularDays = 0;
             let totalParentalHoursTaken = 0;
             let totalBloodDonationDaysTaken = 0;
             let totalSpecialDaysTaken = 0;
+            let totalSickDaysTaken = 0;
+            let totalOtherDaysTaken = 0;
 
             leaves.forEach(leave => {
                 const leaveYear = new Date(leave.from_date).getFullYear();
@@ -1387,6 +1428,8 @@
                     if (leave.parental) totalParentalHoursTaken += leave.parental_hours || 0;
                     if (leave.blood_donation) totalBloodDonationDaysTaken += leave.blood_donation_days || 0;
                     if (leave.special) totalSpecialDaysTaken += leave.special_days || 0;
+                    if (leave.sick) totalSickDaysTaken += leave.sick_days || leave.days;
+                    if (leave.other) totalOtherDaysTaken += leave.other_days || leave.days;
                 }
             });
 
@@ -1397,6 +1440,8 @@
             const remainingParentalHours = totalParentalHours - totalParentalHoursTaken;
             const remainingBloodDonationDays = TOTAL_BLOOD_DONATION_DAYS - totalBloodDonationDaysTaken;
             const remainingSpecialDays = TOTAL_SPECIAL_DAYS - totalSpecialDaysTaken;
+            const remainingSickDays = totalSickDays - totalSickDaysTaken;
+            const remainingOtherDays = totalOtherDays - totalOtherDaysTaken;
 
             document.getElementById("entitled").textContent = entitled;
             document.getElementById("total").textContent = total;
@@ -1407,13 +1452,17 @@
             document.getElementById("remainingBloodDonationDays").textContent = remainingBloodDonationDays;
             document.getElementById("totalSpecialDays").textContent = TOTAL_SPECIAL_DAYS;
             document.getElementById("remainingSpecialDays").textContent = remainingSpecialDays;
+            document.getElementById("remainingSickDays").textContent = remainingSickDays;
+            document.getElementById("remainingOtherDays").textContent = remainingOtherDays;
 
             const { error } = await supabase
                 .from("employees")
                 .update({
                     previous: previous,
                     total: total,
-                    remaining: remaining
+                    remaining: remaining,
+                    total_sick_days: totalSickDays,
+                    total_other_days: totalOtherDays
                 })
                 .eq("id", selectedEmployee.id);
             if (error) {
@@ -1422,6 +1471,8 @@
                 selectedEmployee.previous = previous;
                 selectedEmployee.total = total;
                 selectedEmployee.remaining = remaining;
+                selectedEmployee.total_sick_days = totalSickDays;
+                selectedEmployee.total_other_days = totalOtherDays;
             }
         }
 
@@ -1570,6 +1621,6 @@
             document.getElementById("otherDays").textContent = otherDays;
         }
     </script>
-    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'920c54455aea8bbc',t:'MTc0MjA0NTA0Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'920c54455aea8bbc',t:'MTc0MjA0NTA0Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.left='-9999px';a.style.top='-9999px';a.onload=c;document.body.appendChild(a)}})();</script>
 </body>
 </html>
