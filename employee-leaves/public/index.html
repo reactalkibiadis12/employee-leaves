@@ -452,24 +452,32 @@
                 visibility: visible;
                 width: 100%;
             }
-            input[type="radio"] {
+          input[type="radio"] {
         accent-color: #1a1a1a;
         width: 16px;
         height: 16px;
     }
 
-input[type="radio"] {
-    -webkit-appearance: none; /* Αφαίρεση προεπιλεγμένης εμφάνισης */
-    -moz-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    border: 2px solid #333333; /* Σκούρο γκρι περίγραμμα */
-    border-radius: 50%;
-    background-color: #ffffff; /* Λευκό φόντο όταν δεν είναι επιλεγμένο */
-    vertical-align: middle;
-}
+    input[type="radio"]:checked {
+        background-color: #1a1a1a;
+    }
 
+    @media print {
+        input[type="radio"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #000000;
+            border-radius: 50%;
+            background-color: #ffffff;
+        }
+
+        input[type="radio"]:checked {
+            background-color: #000000;
+            border: 2px solid #000000;
+        }
 
     
         }
