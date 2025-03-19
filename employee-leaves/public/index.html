@@ -1058,8 +1058,9 @@ async function checkAndUpdateYear() {
     document.getElementById("totalParentalHours").textContent = totalParentalHours;
     document.getElementById("totalBloodDonationDays").textContent = TOTAL_BLOOD_DONATION_DAYS;
     document.getElementById("totalSpecialDays").textContent = TOTAL_SPECIAL_DAYS;
-    document.getElementById("totalSickDays").value = data.total_sick_days || DEFAULT_SICK_DAYS; // Default τιμή αν δεν υπάρχει
-    document.getElementById("totalOtherDays").value = data.total_other_days || DEFAULT_OTHER_DAYS; // Default τιμή αν δεν υπάρχει
+    // Χρησιμοποιούμε την τιμή από τη βάση, ή default μόνο αν είναι null/undefined
+    document.getElementById("totalSickDays").value = data.total_sick_days !== null && data.total_sick_days !== undefined ? data.total_sick_days : DEFAULT_SICK_DAYS;
+    document.getElementById("totalOtherDays").value = data.total_other_days !== null && data.total_other_days !== undefined ? data.total_other_days : DEFAULT_OTHER_DAYS;
 
     const { data: leavesData, error: leavesError } = await supabase
         .from("leaves")
@@ -1098,7 +1099,6 @@ async function checkAndUpdateYear() {
     updateLeaveTableForYear(selectedYear);
     updateTotals();
 }
-
         function updateLeaveTableForYear(year) {
             selectedYear = parseInt(year);
             renderLeaveTable();
