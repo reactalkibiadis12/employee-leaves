@@ -1485,71 +1485,76 @@
             }
         }
 
-        async function updateTotals() {
-            const previous = parseInt(document.getElementById("previous").value) || 0;
-            const totalSickDays = parseInt(document.getElementById("totalSickDays").value) || DEFAULT_SICK_DAYS;
-            const totalOtherDays = parseInt(document.getElementById("totalOtherDays").value) || DEFAULT_OTHER_DAYS;
-            let regularDays = 0;
-            let totalParentalHoursTaken = 0;
-            let totalBloodDonationDaysTaken = 0;
-            let totalSpecialDaysTaken = 0;
-            let totalSickDaysTaken = 0;
-            let totalOtherDaysTaken = 0;
+   async function updateTotals() {
+    const previous = parseInt(document.getElementById("previous").value) || 0;
+    const totalSickDaysInput = parseInt(document.getElementById("totalSickDays").value) || DEFAULT_SICK_DAYS;
+    const totalOtherDaysInput = parseInt(document.getElementById("totalOtherDays").value) || DEFAULT_OTHER_DAYS;
+    let regularDays = 0;
+    let totalParentalHoursTaken = 0;
+    let totalBloodDonationDaysTaken = 0;
+    let totalSpecialDaysTaken = 0;
+    let totalSickDaysTaken = 0;
+    let totalOtherDaysTaken = 0;
 
-            leaves.forEach(leave => {
-                const leaveYear = new Date(leave.from_date).getFullYear();
-                if (leave.saved && leaveYear === currentYear) {
-                    if (leave.regular) regularDays += leave.days;
-                    if (leave.parental) totalParentalHoursTaken += leave.parental_hours || 0;
-                    if (leave.blood_donation) totalBloodDonationDaysTaken += leave.blood_donation_days || 0;
-                    if (leave.special) totalSpecialDaysTaken += leave.special_days || 0;
-                    if (leave.sick) totalSickDaysTaken += leave.sick_days || leave.days;
-                    if (leave.other) totalOtherDaysTaken += leave.other_days || leave.days;
-                }
-            });
-
-            const entitled = selectedEmployee.entitled;
-            const total = entitled + previous;
-            const remaining = total - regularDays;
-            const totalParentalHours = calculateTotalParentalHours(selectedEmployee);
-            const remainingParentalHours = totalParentalHours - totalParentalHoursTaken;
-            const remainingBloodDonationDays = TOTAL_BLOOD_DONATION_DAYS - totalBloodDonationDaysTaken;
-            const remainingSpecialDays = TOTAL_SPECIAL_DAYS - totalSpecialDaysTaken;
-            const remainingSickDays = totalSickDays - totalSickDaysTaken;
-            const remainingOtherDays = totalOtherDays - totalOtherDaysTaken;
-
-            document.getElementById("entitled").textContent = entitled;
-            document.getElementById("total").textContent = total;
-            document.getElementById("remaining").textContent = remaining;
-            document.getElementById("totalParentalHours").textContent = totalParentalHours;
-            document.getElementById("remainingParentalHours").textContent = remainingParentalHours;
-            document.getElementById("totalBloodDonationDays").textContent = TOTAL_BLOOD_DONATION_DAYS;
-            document.getElementById("remainingBloodDonationDays").textContent = remainingBloodDonationDays;
-            document.getElementById("totalSpecialDays").textContent = TOTAL_SPECIAL_DAYS;
-            document.getElementById("remainingSpecialDays").textContent = remainingSpecialDays;
-            document.getElementById("remainingSickDays").textContent = remainingSickDays;
-            document.getElementById("remainingOtherDays").textContent = remainingOtherDays;
-
-            const { error } = await supabase
-                .from("employees")
-                .update({
-                    previous: previous,
-                    total: total,
-                    remaining: remaining,
-                    total_sick_days: totalSickDays,
-                    total_other_days: totalOtherDays
-                })
-                .eq("id", selectedEmployee.id);
-            if (error) {
-                console.error("Error updating employee totals:", error);
-            } else {
-                selectedEmployee.previous = previous;
-                selectedEmployee.total = total;
-                selectedEmployee.remaining = remaining;
-                selectedEmployee.total_sick_days = totalSickDays;
-                selectedEmployee.total_other_days = totalOtherDays;
-            }
+    leaves.forEach(leave => {
+        const leaveYear = new Date(leave.from_date).getFullYear();
+        if (leave.saved && leaveYear === currentYear) {
+            if (leave.regular) regularDays += leave.days;
+            if (leave.parental) totalParentalHoursTaken += leave.parental_hours || 0;
+            if (leave.blood_donation) totalBloodDonationDaysTaken += leave.blood_donation_days || 0;
+            if (leave.special) totalSpecialDaysTaken += leave.special_days || 0;
+            if (leave.sick) totalSickDaysTaken += leave.sick_days || leave.days;
+            if (leave.other) totalOtherDaysTaken += leave.other_days || leave.days;
         }
+    });
+
+    const entitled = selectedEmployee.entitled;
+    const total = entitled + previous;
+    const remaining = Math.max(total - regularDays, 0); // Εξασφαλίζει ότι δεν πέφτει κάτω από 0
+    const totalParentalHours = calculateTotalParentalHours(selectedEmployee);
+    const remainingParentalHours = Math.max(totalParentalHours - totalParentalHoursTaken, 0);
+    const remainingBloodDonationDays = Math.max(TOTAL_BLOOD_DONATION_DAYS - totalBloodDonationDaysTaken, 0);
+    const remainingSpecialDays = Math.max(TOTAL_SPECIAL_DAYS - totalSpecialDaysTaken, 0);
+    const remainingSickDays = Math.max(totalSickDaysInput - totalSickDaysTaken, 0); // Διόρθωση εδώ
+    const remainingOtherDays = Math.max(totalOtherDaysInput - totalOtherDaysTaken, 0); // Διόρθωση εδώ
+
+    // Ενημέρωση UI
+    document.getElementById("entitled").textContent = entitled;
+    document.getElementById("total").textContent = total;
+    document.getElementById("remaining").textContent = remaining;
+    document.getElementById("totalParentalHours").textContent = totalParentalHours;
+    document.getElementById("remainingParentalHours").textContent = remainingParentalHours;
+    document.getElementById("totalBloodDonationDays").textContent = TOTAL_BLOOD_DONATION_DAYS;
+    document.getElementById("remainingBloodDonationDays").textContent = remainingBloodDonationDays;
+    document.getElementById("totalSpecialDays").textContent = TOTAL_SPECIAL_DAYS;
+    document.getElementById("remainingSpecialDays").textContent = remainingSpecialDays;
+    document.getElementById("totalSickDays").textContent = totalSickDaysTaken; // Εμφάνιση των χρησιμοποιημένων ημερών
+    document.getElementById("remainingSickDays").textContent = remainingSickDays;
+    document.getElementById("totalOtherDays").textContent = totalOtherDaysTaken; // Εμφάνιση των χρησιμοποιημένων ημερών
+    document.getElementById("remainingOtherDays").textContent = remainingOtherDays;
+
+    // Ενημέρωση στη βάση δεδομένων
+    const { error } = await supabase
+        .from("employees")
+        .update({
+            previous: previous,
+            total: total,
+            remaining: remaining,
+            total_sick_days: totalSickDaysTaken, // Αποθηκεύουμε τις χρησιμοποιημένες ημέρες
+            total_other_days: totalOtherDaysTaken // Αποθηκεύουμε τις χρησιμοποιημένες ημέρες
+        })
+        .eq("id", selectedEmployee.id);
+
+    if (error) {
+        console.error("Error updating employee totals:", error);
+    } else {
+        selectedEmployee.previous = previous;
+        selectedEmployee.total = total;
+        selectedEmployee.remaining = remaining;
+        selectedEmployee.total_sick_days = totalSickDaysTaken;
+        selectedEmployee.total_other_days = totalOtherDaysTaken;
+    }
+}
 
         function renderLeaveTable() {
             const tbody = document.getElementById("leaveTableBody");
