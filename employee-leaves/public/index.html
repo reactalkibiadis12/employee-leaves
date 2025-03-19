@@ -6,7 +6,7 @@
     <title>Διαχείριση Αδειών Εργαζομένων</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="icon" type="image/png" href="icon.png">
- <style>
+<style>
     * {
         margin: 0;
         padding: 0;
@@ -264,7 +264,7 @@
         background-color: #f1f1f1;
     }
 
-    /* Στυλ για τα checkboxes */
+    /* Στυλ για τα checkboxes - Επιλογή 1: Μεγάλη κουκίδα στο κέντρο */
     input[type="radio"] {
         appearance: none;
         width: 16px;
@@ -278,14 +278,22 @@
     }
 
     input[type="radio"]:checked::before {
-        content: "●"; /* Χρησιμοποιούμε έναν μαύρο κύκλο ως ένδειξη */
+        content: "●"; /* Μεγάλη μαύρη κουκίδα */
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        font-size: 12px;
-        color: #000; /* Μαύρο χρώμα για το σημάδι */
+        font-size: 14px; /* Μεγαλύτερο μέγεθος κουκίδας */
+        color: #000; /* Μαύρο χρώμα */
     }
+
+    /* Εναλλακτική Επιλογή 2: Πλήρως γεμισμένο checkbox (σχολιασμένο - ξεσχολίασε το αν το προτιμάς) */
+    /*
+    input[type="radio"]:checked {
+        background-color: #000; 
+        border: 2px solid #000;
+    }
+    */
 
     /* Στυλ για τις ημερομηνίες (inputs μέσα στον πίνακα) */
     .flatpickr input[type="text"],
@@ -497,12 +505,21 @@
             border: 2px solid #000 !important;
             -webkit-print-color-adjust: exact; /* Εξασφαλίζει σωστή απόδοση χρώματος */
         }
+        /* Επιλογή 1: Μεγάλη κουκίδα στο κέντρο */
         input[type="radio"]:checked::before {
-            content: "●"; /* Μαύρος κύκλος για το επιλεγμένο checkbox στην εκτύπωση */
+            content: "●"; /* Μεγάλη μαύρη κουκίδα */
             color: #000 !important;
-            font-size: 12px;
-            -webkit-print-color-adjust: exact; /* Εξασφαλίζει σωστή απόδοση χρώματος */
+            font-size: 14px; /* Μεγαλύτερο μέγεθος */
+            -webkit-print-color-adjust: exact;
         }
+        /* Εναλλακτική Επιλογή 2: Πλήρως γεμισμένο checkbox (σχολιασμένο - ξεσχολίασε το αν το προτιμάς) */
+        /*
+        input[type="radio"]:checked {
+            background-color: #000 !important;
+            border: 2px solid #000 !important;
+            -webkit-print-color-adjust: exact;
+        }
+        */
         .flatpickr input[type="text"],
         td input[type="text"] {
             color: #000 !important;
